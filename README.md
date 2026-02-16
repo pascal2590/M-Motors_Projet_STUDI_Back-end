@@ -1,2 +1,2 @@
 # M-Motors_Projet_STUDI_Back-end
-Création du service de Location Longue Durée avec Option d’Achat (LLD OA) du projet M-Motors
+Création du service de Location Longue Durée avec Option d’Achat (LLD OA) pour le projet M-Motors
