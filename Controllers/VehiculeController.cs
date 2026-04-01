@@ -7,7 +7,7 @@ namespace m_motors_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class VehiculeController : ControllerBase
+    public class VehiculeController : ControllerBase 
     {
         private readonly MMotorsContext _context;
 
