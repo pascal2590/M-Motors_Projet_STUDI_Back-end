@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using m_motors_API.Data;
 using m_motors_API.Models;
+using m_motors_API.Services;
 
 namespace m_motors_API.Controllers
 {
@@ -9,56 +10,48 @@ namespace m_motors_API.Controllers
     [ApiController]
     public class VehiculeController : ControllerBase
     {
-        private readonly MMotorsContext _context;
+        private readonly VehiculeService _vehiculeService;
 
         public VehiculeController(MMotorsContext context)
         {
-            _context = context;
+            _vehiculeService = new VehiculeService(context);
         }
 
         // GET: api/vehicule
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Vehicule>>> GetVehicules()
         {
-            return await _context.Vehicules.ToListAsync();
+            var vehicules = await _vehiculeService.GetAllVehiculesAsync();
+            return Ok(vehicules);
         }
 
         // GET: api/vehicule/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Vehicule>> GetVehicule(int id)
         {
-            var vehicule = await _context.Vehicules.FindAsync(id);
-
-            if (vehicule == null)
-            {
-                return NotFound();
-            }
-
-            return vehicule;
+            var vehicule = await _vehiculeService.GetVehiculeByIdAsync(id);
+            if (vehicule == null) return NotFound();
+            return Ok(vehicule);
         }
 
-        // GET: api/vehicule/type/location
+        // GET: api/vehicule/type/vente
         [HttpGet("type/{type}")]
         public async Task<ActionResult<IEnumerable<Vehicule>>> GetVehiculesByType(string type)
         {
-            if (!Enum.TryParse<TypeOffre>(type, true, out var typeEnum))
-            {
-                return BadRequest("Type d'offre invalide. Valeurs possibles : vente, location");
-            }
+            var vehicules = await _vehiculeService.GetVehiculesByTypeAsync(type);
 
-            return await _context.Vehicules
-                .Where(v => v.TypeOffre == typeEnum)
-                .ToListAsync();
+            if (!vehicules.Any())
+                return NotFound(new { message = $"Aucun véhicule de type {type} trouvé." });
+
+            return Ok(vehicules);
         }
 
         // POST: api/vehicule
         [HttpPost]
         public async Task<ActionResult<Vehicule>> CreateVehicule(Vehicule vehicule)
         {
-            _context.Vehicules.Add(vehicule);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetVehicule), new { id = vehicule.IdVehicule }, vehicule);
+            var created = await _vehiculeService.CreateVehiculeAsync(vehicule);
+            return CreatedAtAction(nameof(GetVehicule), new { id = created.IdVehicule }, created);
         }
 
         // PUT: api/vehicule/5
@@ -66,27 +59,10 @@ namespace m_motors_API.Controllers
         public async Task<IActionResult> UpdateVehicule(int id, Vehicule vehicule)
         {
             if (id != vehicule.IdVehicule)
-            {
                 return BadRequest();
-            }
 
-            _context.Entry(vehicule).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!VehiculeExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            var updated = await _vehiculeService.UpdateVehiculeAsync(vehicule);
+            if (!updated) return NotFound();
 
             return NoContent();
         }
@@ -95,22 +71,10 @@ namespace m_motors_API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteVehicule(int id)
         {
-            var vehicule = await _context.Vehicules.FindAsync(id);
-
-            if (vehicule == null)
-            {
-                return NotFound();
-            }
-
-            _context.Vehicules.Remove(vehicule);
-            await _context.SaveChangesAsync();
+            var deleted = await _vehiculeService.DeleteVehiculeAsync(id);
+            if (!deleted) return NotFound();
 
             return NoContent();
-        }
-
-        private bool VehiculeExists(int id)
-        {
-            return _context.Vehicules.Any(e => e.IdVehicule == id);
         }
     }
 }
