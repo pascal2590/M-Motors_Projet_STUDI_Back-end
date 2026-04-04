@@ -1,16 +1,30 @@
 using Microsoft.EntityFrameworkCore;
 using m_motors_API.Data;
-using System.Text.Json.Serialization; // nécessaire pour JsonStringEnumConverter
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Connexion base de données
+// Connexion à la base de données
 var connectionString = builder.Configuration.GetConnectionString("MMotorsConnection");
 
 builder.Services.AddDbContext<MMotorsContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-// Ajout des controllers et conversion des enums en string pour JSON
+
+// Ajout de CORS (AVANT builder.Build)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngular",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:4200")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
+
+
+// Controllers + JSON
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -23,7 +37,12 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Activation Swagger
+
+// Utiliser CORS (APRÈS builder.Build)
+app.UseCors("AllowAngular");
+
+
+// Swagger
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
