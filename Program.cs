@@ -1,17 +1,22 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using m_motors_API.Data;
+using m_motors_API.Services;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Connexion à la base de données
+// -------------------------------
+// Connexion Ã  la base de donnÃ©es
+// -------------------------------
 var connectionString = builder.Configuration.GetConnectionString("MMotorsConnection");
-
 builder.Services.AddDbContext<MMotorsContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
+);
 
-
-// Ajout de CORS (AVANT builder.Build)
+// -------------------------------
+// CORS (pour Angular localhost:4200)
+// -------------------------------
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular",
@@ -23,30 +28,43 @@ builder.Services.AddCors(options =>
         });
 });
 
+// -------------------------------
+// Services
+// -------------------------------
+builder.Services.AddScoped<TokenService>(); // <-- important pour AuthController
 
+// -------------------------------
 // Controllers + JSON
+// -------------------------------
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
+// -------------------------------
 // Swagger
+// -------------------------------
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "M-Motors API", Version = "v1" });
+});
 
+// -------------------------------
+// Build
+// -------------------------------
 var app = builder.Build();
 
-
-// Utiliser CORS (APRÈS builder.Build)
+// -------------------------------
+// Middleware
+// -------------------------------
 app.UseCors("AllowAngular");
 
-
-// Swagger
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "M-Motors API v1"));
 }
 
 app.UseHttpsRedirection();
