@@ -21,7 +21,7 @@ namespace m_motors_API.Controllers
         {
             // Exemple : récupérer les 5 derniers véhicules disponibles
             var vehicules = _context.Vehicules
-                .Where(v => v.Disponible) // Ajouter ce champ pour filtrer les véhicules disponibles
+                .Where(v => v.Disponible) // Ajout de ce champ pour filtrer les véhicules disponibles
                 .OrderByDescending(v => v.DateUpload)
                 .Take(5)
                 .Select(v => new
