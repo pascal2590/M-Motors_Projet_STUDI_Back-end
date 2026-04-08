@@ -44,4 +44,6 @@ public class Vehicule
     public ICollection<Dossier> Dossiers { get; set; } = new List<Dossier>();
 
     public ICollection<VehiculeServiceLLD> VehiculeServices { get; set; } = new List<VehiculeServiceLLD>();
+    public object DateUpload { get; internal set; }
+    public object ImageUrl { get; internal set; }
 }
