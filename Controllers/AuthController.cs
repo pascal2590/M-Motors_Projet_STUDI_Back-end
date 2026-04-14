@@ -3,6 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using m_motors_API.Data;
 using m_motors_API.DTO;
 using m_motors_API.Services;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+
 
 namespace m_motors_API.Controllers
 {
@@ -103,5 +106,41 @@ namespace m_motors_API.Controllers
 
             return Ok(new { token });
         }
+
+        //---------------------------------
+        // GET CURRENT CLIENT (/me)
+        //---------------------------------
+        [Authorize]
+        [HttpGet("client/me")]
+        public IActionResult GetCurrentClient()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null)
+            {
+                return Unauthorized(new { message = "Token invalide" });
+            }
+
+            int clientId = int.Parse(userIdClaim.Value);
+
+            var client = _context.Clients
+                .FirstOrDefault(c => c.IdClient == clientId);
+
+            if (client == null)
+            {
+                return NotFound(new { message = "Client introuvable" });
+            }
+
+            return Ok(new
+            {
+                id = client.IdClient,
+                nom = client.Nom,
+                prenom = client.Prenom,
+                email = client.Email,
+                telephone = client.Telephone,
+                adresse = client.Adresse
+            });
+        }
+
     }
 }

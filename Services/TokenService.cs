@@ -33,14 +33,13 @@ namespace m_motors_API.Services
             var claims = new[]
             {
                 new Claim(ClaimTypes.Name, email),
-
                 new Claim(ClaimTypes.Role, role),
-
                 new Claim("Type", typeUtilisateur),
 
-                new Claim("UserId",
-                    userId.ToString())
+                // IMPORTANT
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString())
             };
+
 
             var token = new JwtSecurityToken(
                 issuer: issuer,
