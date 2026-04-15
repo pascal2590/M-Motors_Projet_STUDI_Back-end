@@ -1,0 +1,15 @@
+﻿namespace m_motors_API.DTO
+{
+    public class DossierLldDto
+    {
+        public int ClientId { get; set; }
+
+        public int VehiculeId { get; set; }
+
+        public int Duree { get; set; }
+
+        public int Kilometrage { get; set; }
+
+        public decimal Mensualite { get; set; }
+    }
+}

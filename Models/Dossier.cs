@@ -12,7 +12,7 @@ namespace m_motors_API.Models
 
         public StatutDossier Statut { get; set; } = StatutDossier.en_attente;
 
-        public DateTime DateCreation { get; set; }
+        public DateTime DateCreation { get; set; } = DateTime.Now;
 
         public int? ClientId { get; set; }
 
@@ -25,5 +25,8 @@ namespace m_motors_API.Models
         public ICollection<DocumentClient> Documents { get; set; }
 
         public ICollection<SuiviDossier> Suivis { get; set; }
+
+        // 🔥 AJOUT CRUCIAL
+        public ICollection<DossierFinancement> Financements { get; set; }
     }
 }

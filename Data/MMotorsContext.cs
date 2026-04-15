@@ -20,6 +20,8 @@ namespace m_motors_API.Data
         public DbSet<Utilisateur> Utilisateurs { get; set; }
         public DbSet<Vehicule> Vehicules { get; set; }
         public DbSet<VehiculeServiceLLD> VehiculeServiceLLDs { get; set; }
+        public DbSet<DossierFinancement> DossierFinancements { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -40,9 +42,17 @@ namespace m_motors_API.Data
                 .HasKey(d => d.IdDocument);
 
             modelBuilder.Entity<DocumentClient>()
+                .Property(d => d.IdDocument)
+                .HasColumnName("id_document");
+
+            modelBuilder.Entity<DocumentClient>()
                 .HasOne(d => d.Dossier)
                 .WithMany(ds => ds.Documents)
                 .HasForeignKey(d => d.DossierId);
+
+            modelBuilder.Entity<DocumentClient>()
+                .Property(d => d.DossierId)
+                .HasColumnName("dossier_id");
 
             //---------------------------------
             // Table DOSSIER
@@ -50,6 +60,32 @@ namespace m_motors_API.Data
             modelBuilder.Entity<Dossier>()
                 .ToTable("dossier")
                 .HasKey(d => d.IdDossier);
+
+            modelBuilder.Entity<Dossier>()
+                .Property(d => d.IdDossier)
+                .HasColumnName("id_dossier");
+
+            modelBuilder.Entity<Dossier>()
+                .Property(d => d.TypeDossier)
+                .HasConversion<string>()
+                .HasColumnName("type_dossier");
+
+            modelBuilder.Entity<Dossier>()
+                .Property(d => d.Statut)
+                .HasConversion<string>()
+                .HasColumnName("statut");
+
+            modelBuilder.Entity<Dossier>()
+                .Property(d => d.DateCreation)
+                .HasColumnName("date_creation");
+
+            modelBuilder.Entity<Dossier>()
+                .Property(d => d.ClientId)
+                .HasColumnName("client_id");
+
+            modelBuilder.Entity<Dossier>()
+                .Property(d => d.VehiculeId)
+                .HasColumnName("vehicule_id");
 
             modelBuilder.Entity<Dossier>()
                 .HasOne(d => d.Client)
@@ -83,6 +119,10 @@ namespace m_motors_API.Data
                 .HasKey(s => s.IdSuivi);
 
             modelBuilder.Entity<SuiviDossier>()
+                .Property(s => s.IdSuivi)
+                .HasColumnName("id_suivi");
+
+            modelBuilder.Entity<SuiviDossier>()
                 .HasOne(s => s.Dossier)
                 .WithMany(d => d.Suivis)
                 .HasForeignKey(s => s.DossierId);
@@ -91,6 +131,15 @@ namespace m_motors_API.Data
                 .HasOne(s => s.Utilisateur)
                 .WithMany(u => u.Suivis)
                 .HasForeignKey(s => s.UserId);
+
+            modelBuilder.Entity<SuiviDossier>()
+                .Property(s => s.DossierId)
+                .HasColumnName("dossier_id");
+
+            modelBuilder.Entity<SuiviDossier>()
+                .Property(s => s.UserId)
+                .HasColumnName("user_id");
+
 
             //---------------------------------
             // Table UTILISATEUR
@@ -131,6 +180,29 @@ namespace m_motors_API.Data
                 .HasOne(vs => vs.ServiceLLD)
                 .WithMany(s => s.VehiculeServices)
                 .HasForeignKey(vs => vs.IdService);
+
+            //---------------------------------
+            // Table DOSSIER_FINANCEMENT
+            //---------------------------------
+            modelBuilder.Entity<DossierFinancement>()
+                .ToTable("dossier_financement");
+
+            modelBuilder.Entity<DossierFinancement>()
+                .HasKey(df => df.Id);
+
+            modelBuilder.Entity<DossierFinancement>()
+                .Property(df => df.Id)
+                .HasColumnName("id");
+
+            modelBuilder.Entity<DossierFinancement>()
+                .Property(df => df.DossierId)
+                .HasColumnName("dossier_id");
+
+            modelBuilder.Entity<DossierFinancement>()
+                .HasOne(df => df.Dossier)
+                .WithMany(d => d.Financements)
+                .HasForeignKey(df => df.DossierId);
+
         }
     }
 }
