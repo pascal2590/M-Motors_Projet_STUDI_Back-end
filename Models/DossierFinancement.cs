@@ -1,4 +1,5 @@
-﻿using System;
+﻿using System.Text.Json.Serialization;
+
 
 namespace m_motors_API.Models
 {
@@ -18,6 +19,7 @@ namespace m_motors_API.Models
 
         public decimal? Mensualite { get; set; }
 
+        [JsonIgnore]
         public Dossier Dossier { get; set; }
     }
 }

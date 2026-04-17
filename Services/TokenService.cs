@@ -47,7 +47,7 @@ namespace m_motors_API.Services
 
                 claims: claims,
 
-                expires: DateTime.UtcNow.AddHours(2),
+                expires: DateTime.UtcNow.AddMinutes(30),
 
                 signingCredentials: creds
             );
