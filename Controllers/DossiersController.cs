@@ -17,39 +17,85 @@ namespace m_motors_API.Controllers
             _context = context;
         }
 
-        // -------------------------
+        // =====================================================
         // ACHAT
-        // -------------------------
+        // =====================================================
         [HttpPost("achat")]
         public IActionResult CreateAchat([FromBody] DossierAchatDto dto)
         {
             if (dto == null)
-                return BadRequest("DTO invalide");
-
-            var clientExists = _context.Clients.Any(c => c.IdClient == dto.ClientId);
-            if (!clientExists)
-                return BadRequest("Client introuvable");
-
-            var vehiculeExists = _context.Vehicules.Any(v => v.IdVehicule == dto.VehiculeId);
-            if (!vehiculeExists)
-                return BadRequest("Véhicule introuvable");
-
-            // PROTECTION ANTI DOUBLON
-            var alreadyExists = _context.Dossiers.Any(d =>
-                d.ClientId == dto.ClientId &&
-                d.VehiculeId == dto.VehiculeId &&
-                d.TypeDossier == Enums.TypeDossier.achat
-            );
-
-            if (alreadyExists)
             {
-                return BadRequest("Un dossier existe déjà pour ce véhicule");
+                return Ok(new
+                {
+                    success = false,
+                    message = "DTO invalide"
+                });
             }
 
+            // -----------------------------
+            // VALIDATION CLIENT
+            // -----------------------------
+            var clientExists = _context.Clients
+                .Any(c => c.IdClient == dto.ClientId);
+
+            if (!clientExists)
+            {
+                return Ok(new
+                {
+                    success = false,
+                    message = "Client introuvable"
+                });
+            }
+
+            // -----------------------------
+            // VALIDATION VEHICULE
+            // -----------------------------
+            var vehicule = _context.Vehicules
+                .FirstOrDefault(v => v.IdVehicule == dto.VehiculeId);
+
+            if (vehicule == null)
+            {
+                return Ok(new
+                {
+                    success = false,
+                    message = "Véhicule introuvable"
+                });
+            }
+
+            // -----------------------------
+            // VERIFICATION DISPONIBILITE
+            // -----------------------------
+            if (!vehicule.Disponible)
+            {
+                return Ok(new
+                {
+                    success = false,
+                    message = "Ce véhicule n'est plus disponible"
+                });
+            }
+
+            // -----------------------------
+            // ANTI DOUBLON VEHICULE
+            // -----------------------------
+            var vehiculeAlreadyUsed = _context.Dossiers
+                .Any(d => d.VehiculeId == dto.VehiculeId);
+
+            if (vehiculeAlreadyUsed)
+            {
+                return Ok(new
+                {
+                    success = false,
+                    message = "Ce véhicule possède déjà un dossier actif"
+                });
+            }
+
+            // -----------------------------
+            // CREATION DOSSIER
+            // -----------------------------
             var dossier = new Dossier
             {
-                TypeDossier = Enums.TypeDossier.achat,
-                Statut = Enums.StatutDossier.en_attente,
+                TypeDossier = TypeDossier.achat,
+                Statut = StatutDossier.en_attente,
                 DateCreation = DateTime.Now,
                 ClientId = dto.ClientId,
                 VehiculeId = dto.VehiculeId
@@ -58,64 +104,117 @@ namespace m_motors_API.Controllers
             _context.Dossiers.Add(dossier);
             _context.SaveChanges();
 
+            // -----------------------------
+            // RENDRE VEHICULE INDISPONIBLE
+            // -----------------------------
+            vehicule.Disponible = false;
+            _context.SaveChanges();
+
+            // -----------------------------
+            // RESPONSE
+            // -----------------------------
             return Ok(new
             {
-                message = "Dossier achat créé",
-                dossier.IdDossier
+                success = true,
+                message = "Dossier Achat créé avec succès",
+                dossier = new
+                {
+                    dossier.IdDossier,
+                    dossier.TypeDossier,
+                    dossier.Statut,
+                    dossier.DateCreation
+                }
             });
         }
 
-        // -------------------------
+
+
+        // =====================================================
         // LLD
-        // -------------------------
+        // =====================================================
         [HttpPost("lld")]
         public IActionResult CreateLld([FromBody] DossierLldDto dto)
         {
             if (dto == null)
-                return BadRequest("DTO invalide");
-
-            // -----------------------------
-            // VALIDATION DU CLIENT
-            // -----------------------------
-            var clientExists = _context.Clients.Any(c => c.IdClient == dto.ClientId);
-            if (!clientExists)
-                return BadRequest("Client introuvable");
-
-            // -----------------------------
-            // VALIDATION DU VEHICULE
-            // -----------------------------
-            var vehiculeExists = _context.Vehicules.Any(v => v.IdVehicule == dto.VehiculeId);
-            if (!vehiculeExists)
-                return BadRequest("Véhicule introuvable");
-
-            // -----------------------------
-            // ANTI-DOUBLON
-            // -----------------------------
-            var alreadyExists = _context.Dossiers.Any(d =>
-                d.ClientId == dto.ClientId &&
-                d.VehiculeId == dto.VehiculeId &&
-                d.TypeDossier == Enums.TypeDossier.location
-            );
-
-            if (alreadyExists)
             {
-                return BadRequest("Un dossier LLD existe déjà pour ce véhicule");
+                return Ok(new
+                {
+                    success = false,
+                    message = "DTO invalide"
+                });
             }
 
             // -----------------------------
-            // CREATION DU DOSSIER
+            // VALIDATION CLIENT
+            // -----------------------------
+            var clientExists = _context.Clients
+                .Any(c => c.IdClient == dto.ClientId);
+
+            if (!clientExists)
+            {
+                return Ok(new
+                {
+                    success = false,
+                    message = "Client introuvable"
+                });
+            }
+
+            // -----------------------------
+            // VALIDATION VEHICULE
+            // -----------------------------
+            var vehicule = _context.Vehicules
+                .FirstOrDefault(v => v.IdVehicule == dto.VehiculeId);
+
+            if (vehicule == null)
+            {
+                return Ok(new
+                {
+                    success = false,
+                    message = "Véhicule introuvable"
+                });
+            }
+
+            // -----------------------------
+            // VERIFICATION DISPONIBILITE
+            // -----------------------------
+            if (!vehicule.Disponible)
+            {
+                return Ok(new
+                {
+                    success = false,
+                    message = "Ce véhicule n'est plus disponible"
+                });
+            }
+
+            // -----------------------------
+            // ANTI DOUBLON VEHICULE
+            // -----------------------------
+            var vehiculeAlreadyUsed = _context.Dossiers
+                .Any(d => d.VehiculeId == dto.VehiculeId);
+
+            if (vehiculeAlreadyUsed)
+            {
+                return Ok(new
+                {
+                    success = false,
+                    message = "Ce véhicule possède déjà un dossier actif"
+                });
+            }
+
+            // -----------------------------
+            // CREATION DOSSIER
             // -----------------------------
             var dossier = new Dossier
             {
-                TypeDossier = Enums.TypeDossier.location,
-                Statut = Enums.StatutDossier.en_attente,
+                TypeDossier = TypeDossier.location,
+                Statut = StatutDossier.en_attente,
                 DateCreation = DateTime.Now,
                 ClientId = dto.ClientId,
                 VehiculeId = dto.VehiculeId
             };
 
             _context.Dossiers.Add(dossier);
-            _context.SaveChanges(); // pour IdDossier
+            _context.SaveChanges(); // pour récupérer IdDossier
 
             // -----------------------------
             // FINANCEMENT LLD
@@ -134,10 +233,17 @@ namespace m_motors_API.Controllers
             _context.SaveChanges();
 
             // -----------------------------
-            // REPONSE DETAILLEE
+            // RENDRE VEHICULE INDISPONIBLE
+            // -----------------------------
+            vehicule.Disponible = false;
+            _context.SaveChanges();
+
+            // -----------------------------
+            // RESPONSE
             // -----------------------------
             return Ok(new
             {
+                success = true,
                 message = "Dossier LLD créé avec succès",
                 dossier = new
                 {
@@ -149,7 +255,5 @@ namespace m_motors_API.Controllers
                 financement
             });
         }
-
-
     }
 }
