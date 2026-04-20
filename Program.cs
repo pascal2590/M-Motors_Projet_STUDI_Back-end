@@ -9,19 +9,15 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// -------------------------------
-// Database
-// -------------------------------
+// DATABASE
 var connectionString = builder.Configuration.GetConnectionString("MMotorsConnection");
 
 builder.Services.AddDbContext<MMotorsContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
 );
 
-// -------------------------------
 // JWT CONFIG
-// -------------------------------
-var jwtKey = builder.Configuration["Jwt:Key"];
+var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new Exception("JWT Key missing");
 var key = Encoding.UTF8.GetBytes(jwtKey);
 
 builder.Services.AddAuthentication(options =>
@@ -37,46 +33,41 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Issuer"],        
+        ValidAudience = builder.Configuration["Jwt:Issuer"],
         IssuerSigningKey = new SymmetricSecurityKey(key)
     };
 });
 
-// -------------------------------
 // CORS
-// -------------------------------
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAngular",
-        policy =>
-        {
-            policy
-                .WithOrigins("http://localhost:4200")
-                .AllowAnyHeader()
-                .AllowAnyMethod()
-                .AllowCredentials();
-        });
+    options.AddPolicy("AllowAngular", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:4200")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
 });
 
-// -------------------------------
-// Services
-// -------------------------------
+// SERVICES
 builder.Services.AddScoped<TokenService>();
 
-// -------------------------------
-// Controllers
-// -------------------------------
+// CONTROLLERS + JSON CONFIG
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+
+        options.JsonSerializerOptions.ReferenceHandler =
+            ReferenceHandler.IgnoreCycles;
+
+        options.JsonSerializerOptions.WriteIndented = true;
     });
 
-// -------------------------------
-// Swagger + JWT support
-// -------------------------------
+// SWAGGER CONFIG
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(c =>
@@ -87,7 +78,6 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1"
     });
 
-    // Ajout bouton Authorize dans Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -95,7 +85,7 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Entrer : Bearer {token}"
+        Description = "Enter: Bearer {your token}"
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -109,19 +99,18 @@ builder.Services.AddSwaggerGen(c =>
                     Id = "Bearer"
                 }
             },
-            new string[] {}
+            new string[] { }
         }
     });
+
+    c.UseAllOfToExtendReferenceSchemas();
+    c.UseInlineDefinitionsForEnums();
 });
 
-// -------------------------------
-// Build
-// -------------------------------
+// BUILD APP
 var app = builder.Build();
 
-// -------------------------------
-// Middleware
-// -------------------------------
+// MIDDLEWARE
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -130,9 +119,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseStaticFiles();
+
 app.UseCors("AllowAngular");
 
-// IMPORTANT : ordre obligatoire
 app.UseAuthentication();
 app.UseAuthorization();
 

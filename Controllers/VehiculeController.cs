@@ -17,10 +17,8 @@ namespace m_motors_API.Controllers
             _context = context;
         }
 
-        // =====================================================
         // GET: api/vehicule
-        // Liste tous les véhicules DISPONIBLES uniquement
-        // =====================================================
+        // Liste tous les véhicules disponibles
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Vehicule>>> GetVehicules()
         {
@@ -29,11 +27,8 @@ namespace m_motors_API.Controllers
                 .ToListAsync();
         }
 
-        // =====================================================
         // GET: api/vehicule/5
-        // Retourne un véhicule même indisponible
-        // (utile pour affichage fiche véhicule)
-        // =====================================================
+        // Détail d'un véhicule
         [HttpGet("{id}")]
         public async Task<ActionResult<Vehicule>> GetVehicule(int id)
         {
@@ -42,42 +37,43 @@ namespace m_motors_API.Controllers
 
             if (vehicule == null)
             {
-                return NotFound();
+                return NotFound(new
+                {
+                    message = "Véhicule introuvable"
+                });
             }
 
-            return vehicule;
+            return Ok(vehicule);
         }
 
-        // =====================================================
         // GET: api/vehicule/type/location
-        // Filtrer par type + disponible
-        // =====================================================
+        // Filtrer par type d'offre
         [HttpGet("type/{type}")]
         public async Task<ActionResult<IEnumerable<Vehicule>>> GetVehiculesByType(string type)
         {
             if (!Enum.TryParse<TypeOffre>(type, true, out var typeEnum))
             {
-                return BadRequest(
-                    "Type d'offre invalide. Valeurs possibles : vente, location"
-                );
+                return BadRequest(new
+                {
+                    message = "Type invalide (vente, location)"
+                });
             }
 
-            return await _context.Vehicules
+            var vehicules = await _context.Vehicules
                 .Where(v =>
                     v.TypeOffre == typeEnum &&
                     v.Disponible
                 )
                 .ToListAsync();
+
+            return Ok(vehicules);
         }
 
-        // =====================================================
         // POST: api/vehicule
-        // Création véhicule
-        // =====================================================
+        // Création véhicule     
         [HttpPost]
         public async Task<ActionResult<Vehicule>> CreateVehicule(Vehicule vehicule)
         {
-            // Sécurité : un nouveau véhicule est disponible par défaut
             vehicule.Disponible = true;
 
             _context.Vehicules.Add(vehicule);
@@ -90,16 +86,18 @@ namespace m_motors_API.Controllers
             );
         }
 
-        // =====================================================
+  
         // PUT: api/vehicule/5
-        // Modification véhicule
-        // =====================================================
+        // Modification véhicule    
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateVehicule(int id, Vehicule vehicule)
         {
             if (id != vehicule.IdVehicule)
             {
-                return BadRequest();
+                return BadRequest(new
+                {
+                    message = "ID incohérent"
+                });
             }
 
             _context.Entry(vehicule).State = EntityState.Modified;
@@ -114,40 +112,18 @@ namespace m_motors_API.Controllers
                 {
                     return NotFound();
                 }
-                else
-                {
-                    throw;
-                }
+
+                throw;
             }
 
             return NoContent();
-        }
+        }        
 
-        // =====================================================
-        // DELETE: api/vehicule/5
-        // =====================================================
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteVehicule(int id)
-        {
-            var vehicule = await _context.Vehicules
-                .FindAsync(id);
 
-            if (vehicule == null)
-            {
-                return NotFound();
-            }
-
-            _context.Vehicules.Remove(vehicule);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        // =====================================================
+        // CHECK EXISTENCE     
         private bool VehiculeExists(int id)
         {
-            return _context.Vehicules
-                .Any(e => e.IdVehicule == id);
+            return _context.Vehicules.Any(e => e.IdVehicule == id);
         }
     }
 }

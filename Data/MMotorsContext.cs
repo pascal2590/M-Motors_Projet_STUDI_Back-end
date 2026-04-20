@@ -27,16 +27,13 @@ namespace m_motors_API.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            //---------------------------------
+    
             // Table CLIENT
-            //---------------------------------
             modelBuilder.Entity<Client>()
                 .ToTable("client")
                 .HasKey(c => c.IdClient);
 
-            //---------------------------------
             // Table DOCUMENT
-            //---------------------------------
             modelBuilder.Entity<DocumentClient>()
                 .ToTable("document")
                 .HasKey(d => d.IdDocument);
@@ -46,17 +43,31 @@ namespace m_motors_API.Data
                 .HasColumnName("id_document");
 
             modelBuilder.Entity<DocumentClient>()
-                .HasOne(d => d.Dossier)
-                .WithMany(ds => ds.Documents)
-                .HasForeignKey(d => d.DossierId);
+                .Property(d => d.NomDocument)
+                .HasColumnName("nom_document");
+
+            modelBuilder.Entity<DocumentClient>()
+                .Property(d => d.TypeDocument)
+                .HasColumnName("type_document");
+
+            modelBuilder.Entity<DocumentClient>()
+                .Property(d => d.CheminFichier)
+                .HasColumnName("chemin_fichier");
+
+            modelBuilder.Entity<DocumentClient>()
+                .Property(d => d.DateUpload)
+                .HasColumnName("date_upload");
 
             modelBuilder.Entity<DocumentClient>()
                 .Property(d => d.DossierId)
                 .HasColumnName("dossier_id");
 
-            //---------------------------------
+            modelBuilder.Entity<DocumentClient>()
+                .HasOne(d => d.Dossier)
+                .WithMany(ds => ds.Documents)
+                .HasForeignKey(d => d.DossierId);
+
             // Table DOSSIER
-            //---------------------------------
             modelBuilder.Entity<Dossier>()
                 .ToTable("dossier")
                 .HasKey(d => d.IdDossier);
@@ -97,24 +108,19 @@ namespace m_motors_API.Data
                 .WithMany(v => v.Dossiers)
                 .HasForeignKey(d => d.VehiculeId);
 
-            //---------------------------------
             // Table ROLE
-            //---------------------------------
             modelBuilder.Entity<Role>()
                 .ToTable("role")
                 .HasKey(r => r.IdRole);
 
-            //---------------------------------
-            // Table SERVICE_LLD
-            //---------------------------------
+   
+            // Table SERVICE_LLD     
             modelBuilder.Entity<ServiceLLD>()
                 .ToTable("service_lld")
                 .HasKey(s => s.IdService);
 
-            //---------------------------------
-            // Table SUIVI_DOSSIER
-            //---------------------------------
-            modelBuilder.Entity<SuiviDossier>()
+                // Table SUIVI_DOSSIER
+               modelBuilder.Entity<SuiviDossier>()
                 .ToTable("suivi_dossier")
                 .HasKey(s => s.IdSuivi);
 
@@ -140,10 +146,7 @@ namespace m_motors_API.Data
                 .Property(s => s.UserId)
                 .HasColumnName("user_id");
 
-
-            //---------------------------------
-            // Table UTILISATEUR
-            //---------------------------------
+               // Table UTILISATEUR 
             modelBuilder.Entity<Utilisateur>()
                 .ToTable("utilisateur")
                 .HasKey(u => u.IdUser);
@@ -153,9 +156,7 @@ namespace m_motors_API.Data
                 .WithMany(r => r.Utilisateurs)
                 .HasForeignKey(u => u.RoleId);
 
-            //---------------------------------
-            // Table VEHICULE
-            //---------------------------------
+            // Table VEHICULE    
             modelBuilder.Entity<Vehicule>()
                 .ToTable("vehicule")
                 .HasKey(v => v.IdVehicule);
@@ -164,10 +165,8 @@ namespace m_motors_API.Data
                 .Property(v => v.TypeOffre)
                 .HasConversion<string>();
 
-            //---------------------------------
             // Table liaison VEHICULE_SERVICE_LLD
-            //---------------------------------
-            modelBuilder.Entity<VehiculeServiceLLD>()
+              modelBuilder.Entity<VehiculeServiceLLD>()
                 .ToTable("vehicule_service_lld")
                 .HasKey(vs => new { vs.IdVehicule, vs.IdService });
 
@@ -181,10 +180,8 @@ namespace m_motors_API.Data
                 .WithMany(s => s.VehiculeServices)
                 .HasForeignKey(vs => vs.IdService);
 
-            //---------------------------------
-            // Table DOSSIER_FINANCEMENT
-            //---------------------------------
-            modelBuilder.Entity<DossierFinancement>()
+             // Table DOSSIER_FINANCEMENT
+              modelBuilder.Entity<DossierFinancement>()
                 .ToTable("dossier_financement");
 
             modelBuilder.Entity<DossierFinancement>()

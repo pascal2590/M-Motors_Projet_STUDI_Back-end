@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using m_motors_API.DTO;
 using m_motors_API.Models;
 using m_motors_API.Data;
@@ -18,80 +19,37 @@ namespace m_motors_API.Controllers
         }
 
         // =====================================================
+        // VALIDATION VEHICULE + CLIENT (helper interne)
+        // =====================================================
+        private (Client? client, Vehicule? vehicule, IActionResult? error) Validate(int clientId, int vehiculeId)
+        {
+            var client = _context.Clients.FirstOrDefault(c => c.IdClient == clientId);
+            if (client == null)
+                return (null, null, NotFound("Client introuvable"));
+
+            var vehicule = _context.Vehicules.FirstOrDefault(v => v.IdVehicule == vehiculeId);
+            if (vehicule == null)
+                return (null, null, NotFound("Vehicule introuvable"));
+
+            if (!vehicule.Disponible)
+                return (null, null, BadRequest("Vehicule non disponible"));
+
+            var already = _context.Dossiers.Any(d => d.VehiculeId == vehiculeId);
+            if (already)
+                return (null, null, BadRequest("Vehicule deja utilise dans un dossier"));
+
+            return (client, vehicule, null);
+        }
+
+        // =====================================================
         // ACHAT
         // =====================================================
         [HttpPost("achat")]
         public IActionResult CreateAchat([FromBody] DossierAchatDto dto)
         {
-            if (dto == null)
-            {
-                return Ok(new
-                {
-                    success = false,
-                    message = "DTO invalide"
-                });
-            }
+            var (client, vehicule, error) = Validate(dto.ClientId, dto.VehiculeId);
+            if (error != null) return error;
 
-            // -----------------------------
-            // VALIDATION CLIENT
-            // -----------------------------
-            var clientExists = _context.Clients
-                .Any(c => c.IdClient == dto.ClientId);
-
-            if (!clientExists)
-            {
-                return Ok(new
-                {
-                    success = false,
-                    message = "Client introuvable"
-                });
-            }
-
-            // -----------------------------
-            // VALIDATION VEHICULE
-            // -----------------------------
-            var vehicule = _context.Vehicules
-                .FirstOrDefault(v => v.IdVehicule == dto.VehiculeId);
-
-            if (vehicule == null)
-            {
-                return Ok(new
-                {
-                    success = false,
-                    message = "Véhicule introuvable"
-                });
-            }
-
-            // -----------------------------
-            // VERIFICATION DISPONIBILITE
-            // -----------------------------
-            if (!vehicule.Disponible)
-            {
-                return Ok(new
-                {
-                    success = false,
-                    message = "Ce véhicule n'est plus disponible"
-                });
-            }
-
-            // -----------------------------
-            // ANTI DOUBLON VEHICULE
-            // -----------------------------
-            var vehiculeAlreadyUsed = _context.Dossiers
-                .Any(d => d.VehiculeId == dto.VehiculeId);
-
-            if (vehiculeAlreadyUsed)
-            {
-                return Ok(new
-                {
-                    success = false,
-                    message = "Ce véhicule possède déjà un dossier actif"
-                });
-            }
-
-            // -----------------------------
-            // CREATION DOSSIER
-            // -----------------------------
             var dossier = new Dossier
             {
                 TypeDossier = TypeDossier.achat,
@@ -104,30 +62,17 @@ namespace m_motors_API.Controllers
             _context.Dossiers.Add(dossier);
             _context.SaveChanges();
 
-            // -----------------------------
-            // RENDRE VEHICULE INDISPONIBLE
-            // -----------------------------
-            vehicule.Disponible = false;
+            vehicule!.Disponible = false;
             _context.SaveChanges();
 
-            // -----------------------------
-            // RESPONSE
-            // -----------------------------
             return Ok(new
             {
                 success = true,
-                message = "Dossier Achat créé avec succès",
-                dossier = new
-                {
-                    dossier.IdDossier,
-                    dossier.TypeDossier,
-                    dossier.Statut,
-                    dossier.DateCreation
-                }
+                message = "Dossier créé avec succès",
+                data = dossier
             });
+
         }
-
-
 
         // =====================================================
         // LLD
@@ -135,75 +80,9 @@ namespace m_motors_API.Controllers
         [HttpPost("lld")]
         public IActionResult CreateLld([FromBody] DossierLldDto dto)
         {
-            if (dto == null)
-            {
-                return Ok(new
-                {
-                    success = false,
-                    message = "DTO invalide"
-                });
-            }
+            var (client, vehicule, error) = Validate(dto.ClientId, dto.VehiculeId);
+            if (error != null) return error;
 
-            // -----------------------------
-            // VALIDATION CLIENT
-            // -----------------------------
-            var clientExists = _context.Clients
-                .Any(c => c.IdClient == dto.ClientId);
-
-            if (!clientExists)
-            {
-                return Ok(new
-                {
-                    success = false,
-                    message = "Client introuvable"
-                });
-            }
-
-            // -----------------------------
-            // VALIDATION VEHICULE
-            // -----------------------------
-            var vehicule = _context.Vehicules
-                .FirstOrDefault(v => v.IdVehicule == dto.VehiculeId);
-
-            if (vehicule == null)
-            {
-                return Ok(new
-                {
-                    success = false,
-                    message = "Véhicule introuvable"
-                });
-            }
-
-            // -----------------------------
-            // VERIFICATION DISPONIBILITE
-            // -----------------------------
-            if (!vehicule.Disponible)
-            {
-                return Ok(new
-                {
-                    success = false,
-                    message = "Ce véhicule n'est plus disponible"
-                });
-            }
-
-            // -----------------------------
-            // ANTI DOUBLON VEHICULE
-            // -----------------------------
-            var vehiculeAlreadyUsed = _context.Dossiers
-                .Any(d => d.VehiculeId == dto.VehiculeId);
-
-            if (vehiculeAlreadyUsed)
-            {
-                return Ok(new
-                {
-                    success = false,
-                    message = "Ce véhicule possède déjà un dossier actif"
-                });
-            }
-
-            // -----------------------------
-            // CREATION DOSSIER
-            // -----------------------------
             var dossier = new Dossier
             {
                 TypeDossier = TypeDossier.location,
@@ -214,11 +93,8 @@ namespace m_motors_API.Controllers
             };
 
             _context.Dossiers.Add(dossier);
-            _context.SaveChanges(); // pour récupérer IdDossier
+            _context.SaveChanges();
 
-            // -----------------------------
-            // FINANCEMENT LLD
-            // -----------------------------
             var financement = new DossierFinancement
             {
                 DossierId = dossier.IdDossier,
@@ -232,28 +108,20 @@ namespace m_motors_API.Controllers
             _context.DossierFinancements.Add(financement);
             _context.SaveChanges();
 
-            // -----------------------------
-            // RENDRE VEHICULE INDISPONIBLE
-            // -----------------------------
-            vehicule.Disponible = false;
+            vehicule!.Disponible = false;
             _context.SaveChanges();
 
-            // -----------------------------
-            // RESPONSE
-            // -----------------------------
             return Ok(new
             {
                 success = true,
                 message = "Dossier LLD créé avec succès",
-                dossier = new
+                data = new
                 {
-                    dossier.IdDossier,
-                    dossier.TypeDossier,
-                    dossier.Statut,
-                    dossier.DateCreation
-                },
-                financement
+                    dossier,
+                    financement
+                }
             });
+
         }
     }
 }

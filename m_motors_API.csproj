@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <Folder Include="Repositories\" />
+    <Folder Include="wwwroot\uploads\documents\" />
   </ItemGroup>
 
 </Project>
