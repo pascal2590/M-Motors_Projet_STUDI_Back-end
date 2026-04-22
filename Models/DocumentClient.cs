@@ -11,21 +11,21 @@ namespace m_motors_API.Models
         public int IdDocument { get; set; }
 
         [Column("nom_document")]
-        public string NomDocument { get; set; }
+        public string? NomDocument { get; set; }
 
-        // CHAMP IMPORTANT POUR US10
         [Column("type_document")]
-        public string TypeDocument { get; set; }
+        public string? TypeDocument { get; set; }
 
         [Column("chemin_fichier")]
-        public string CheminFichier { get; set; }
+        public string? CheminFichier { get; set; }
 
         [Column("date_upload")]
-        public DateTime DateUpload { get; set; }
+        public DateTime? DateUpload { get; set; }
 
         [Column("dossier_id")]
         public int? DossierId { get; set; }
 
-        public Dossier Dossier { get; set; }
+        public Dossier? Dossier { get; set; }
     }
+
 }

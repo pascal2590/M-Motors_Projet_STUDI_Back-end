@@ -13,109 +13,105 @@ namespace m_motors_API.Controllers
         private readonly MMotorsContext _context;
         private readonly IWebHostEnvironment _env;
 
-        public DocumentsController(
-            MMotorsContext context,
-            IWebHostEnvironment env)
+        public DocumentsController(MMotorsContext context, IWebHostEnvironment env)
         {
             _context = context;
             _env = env;
         }
 
-        // UPLOAD DOCUMENT
+        // Upload des documents
         [HttpPost("upload")]
-        public async Task<IActionResult> UploadDocument(
-            [FromForm] UploadDocumentDto model)
+        public async Task<IActionResult> UploadDocument([FromForm] UploadDocumentDto model)
         {
-            if (model.File == null || model.File.Length == 0)
+            try
             {
+                if (model == null || model.File == null || model.File.Length == 0)
+                {
+                    return Ok(new
+                    {
+                        success = false,
+                        message = "Fichier invalide"
+                    });
+                }
+
+                var dossier = await _context.Dossiers
+                    .FirstOrDefaultAsync(d => d.IdDossier == model.DossierId);
+
+                if (dossier == null)
+                {
+                    return Ok(new
+                    {
+                        success = false,
+                        message = "Dossier introuvable"
+                    });
+                }
+
+                // Vérifie les doublons
+                var existing = await _context.Documents
+                    .FirstOrDefaultAsync(d =>
+                        d.DossierId == model.DossierId &&
+                        d.TypeDocument == model.TypeDocument);
+
+                if (existing != null)
+                {
+                    _context.Documents.Remove(existing);
+                }
+
+                // dossier wwwroot sécurisé
+                var webRoot = _env.WebRootPath;
+                if (string.IsNullOrEmpty(webRoot))
+                {
+                    webRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                }
+
+                var uploadFolder = Path.Combine(webRoot, "uploads", "documents");
+
+                if (!Directory.Exists(uploadFolder))
+                {
+                    Directory.CreateDirectory(uploadFolder);
+                }
+
+                // nom unique
+                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.File.FileName);
+
+                var filePath = Path.Combine(uploadFolder, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await model.File.CopyToAsync(stream);
+                }
+
+                // sauvegarde en BDD
+                var document = new DocumentClient
+                {
+                    DossierId = model.DossierId,
+                    TypeDocument = model.TypeDocument,
+                    NomDocument = model.File.FileName,
+                    CheminFichier = $"uploads/documents/{fileName}",
+                    DateUpload = DateTime.Now
+                };
+
+                _context.Documents.Add(document);
+                await _context.SaveChangesAsync();
+
                 return Ok(new
                 {
-                    success = false,
-                    message = "Fichier invalide"
+                    success = true,
+                    message = "Document uploadé avec succès"
                 });
             }
-
-            // Vérifier dossier
-            var dossier = await _context.Dossiers
-                .FirstOrDefaultAsync(d =>
-                    d.IdDossier == model.DossierId);
-
-            if (dossier == null)
+            catch (Exception ex)
             {
-                return Ok(new
+                return StatusCode(500, new
                 {
                     success = false,
-                    message = "Dossier introuvable"
+                    message = "Erreur serveur",
+                    error = ex.Message
                 });
             }
-
-            // Vérifier doublon
-            var exists = await _context.Documents
-                .AnyAsync(d =>
-                    d.DossierId == model.DossierId &&
-                    d.TypeDocument == model.TypeDocument);
-
-            if (exists)
-            {
-                return Ok(new
-                {
-                    success = false,
-                    message =
-                        "Document déjà uploadé pour ce type"
-                });
-            }
-
-            // Générer nom unique
-            var uniqueFileName =
-                Guid.NewGuid().ToString()
-                + Path.GetExtension(model.File.FileName);
-
-            var uploadFolder =
-                Path.Combine(
-                    _env.WebRootPath,
-                    "uploads",
-                    "documents"
-                );
-
-            if (!Directory.Exists(uploadFolder))
-            {
-                Directory.CreateDirectory(uploadFolder);
-            }
-
-            var filePath =
-                Path.Combine(uploadFolder, uniqueFileName);
-
-            // Sauvegarde physique
-            using (var stream =
-                   new FileStream(filePath, FileMode.Create))
-            {
-                await model.File.CopyToAsync(stream);
-            }
-
-            // Sauvegarde base
-            var document = new DocumentClient
-            {
-                NomDocument = model.File.FileName,
-                TypeDocument = model.TypeDocument,
-                CheminFichier =
-                    $"uploads/documents/{uniqueFileName}",
-                DateUpload = DateTime.Now,
-                DossierId = model.DossierId
-            };
-
-            _context.Documents.Add(document);
-            await _context.SaveChangesAsync();
-
-            return Ok(new
-            {
-                success = true,
-                message = "Document uploadé"
-            });
         }
 
-
-
-        // VERIFIER DOSSIER COMPLET 
+        // Vérifier si le dossier est complet
         [HttpGet("verifier/{dossierId}")]
         public IActionResult VerifierDossier(int dossierId)
         {
@@ -132,8 +128,7 @@ namespace m_motors_API.Controllers
                 "rib"
             };
 
-            var manquants =
-                requis.Except(documents).ToList();
+            var manquants = requis.Except(documents).ToList();
 
             return Ok(new
             {
@@ -142,7 +137,7 @@ namespace m_motors_API.Controllers
             });
         }
 
-         // LISTE DOCUMENTS DOSSIER   
+        // Liste des documents d'un dossier
         [HttpGet("dossier/{dossierId}")]
         public IActionResult GetDocumentsByDossier(int dossierId)
         {
@@ -153,7 +148,8 @@ namespace m_motors_API.Controllers
                     d.IdDocument,
                     d.NomDocument,
                     d.TypeDocument,
-                    d.DateUpload
+                    d.DateUpload,
+                    d.CheminFichier
                 })
                 .ToList();
 
