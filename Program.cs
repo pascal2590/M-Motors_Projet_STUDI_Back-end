@@ -16,7 +16,7 @@ builder.Services.AddDbContext<MMotorsContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
 );
 
-// JWT CONFIG
+// Configuration de JWT
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new Exception("JWT Key missing");
 var key = Encoding.UTF8.GetBytes(jwtKey);
 
