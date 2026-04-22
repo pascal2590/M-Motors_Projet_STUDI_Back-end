@@ -110,6 +110,10 @@ builder.Services.AddSwaggerGen(c =>
 // BUILD APP
 var app = builder.Build();
 
+// AJOUT TEMPORAIRE POUR DEBUG
+app.UseDeveloperExceptionPage();
+
+
 // MIDDLEWARE
 if (app.Environment.IsDevelopment())
 {
