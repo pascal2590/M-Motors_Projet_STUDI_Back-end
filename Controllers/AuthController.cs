@@ -6,7 +6,6 @@ using m_motors_API.Services;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 
-
 namespace m_motors_API.Controllers
 {
     [ApiController]
@@ -24,9 +23,7 @@ namespace m_motors_API.Controllers
             _tokenService = tokenService;
         }
 
-        //---------------------------------
         // LOGIN CLIENT
-        //---------------------------------
         [HttpPost("client/login")]
         public IActionResult LoginClient([FromBody] ClientLoginRequest request)
         {
@@ -42,15 +39,15 @@ namespace m_motors_API.Controllers
                 client.Email,
                 "Client",
                 "Client",
-                client.IdClient
+                client.IdClient,
+                client.Prenom,
+                client.Nom
             );
 
             return Ok(new { token });
         }
 
-        //---------------------------------
         // REGISTER CLIENT
-        //---------------------------------
         [HttpPost("client/register")]
         public IActionResult RegisterClient([FromBody] RegisterRequest request)
         {
@@ -74,15 +71,15 @@ namespace m_motors_API.Controllers
                 client.Email,
                 "Client",
                 "Client",
-                client.IdClient
+                client.IdClient,
+                client.Prenom,
+                client.Nom
             );
 
             return Ok(new { token });
         }
 
-        //---------------------------------
         // LOGIN BACK-OFFICE
-        //---------------------------------
         [HttpPost("backoffice/login")]
         public IActionResult LoginBackOffice([FromBody] BackOfficeLoginRequest request)
         {
@@ -101,15 +98,16 @@ namespace m_motors_API.Controllers
                 user.Email,
                 roleName,
                 "BackOffice",
-                user.IdUser
+                user.IdUser,
+                "",
+                ""
             );
+
 
             return Ok(new { token });
         }
 
-        //---------------------------------
         // GET CURRENT CLIENT (/me)
-        //---------------------------------
         [Authorize]
         [HttpGet("client/me")]
         public IActionResult GetCurrentClient()
@@ -141,6 +139,5 @@ namespace m_motors_API.Controllers
                 adresse = client.Adresse
             });
         }
-
     }
 }

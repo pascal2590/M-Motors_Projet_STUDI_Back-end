@@ -313,7 +313,26 @@ namespace m_motors_API.Controllers
                     d.TypeDossier,
                     d.Statut,
                     d.DateCreation,
-                    d.VehiculeId
+
+                    Vehicule = new
+                    {
+                        d.Vehicule.IdVehicule,
+                        d.Vehicule.Marque,
+                        d.Vehicule.Modele,
+                        d.Vehicule.Annee,
+                        d.Vehicule.Kilometrage,
+                        d.Vehicule.Prix,
+                        d.Vehicule.ImageUrl
+                    },
+
+                    Documents = _context.Documents
+                        .Where(doc => doc.DossierId == d.IdDossier)
+                        .Select(doc => new
+                        {
+                            doc.TypeDocument,
+                            doc.CheminFichier
+                        })
+                        .ToList()
                 })
                 .ToList();
 
@@ -323,7 +342,29 @@ namespace m_motors_API.Controllers
 
 
 
+        [HttpGet]
+        public IActionResult GetAll()
+        {
+            var dossiers = _context.Dossiers
+                .Select(d => new
+                {
+                    d.IdDossier,
+                    d.TypeDossier,
+                    d.Statut,
+                    d.DateCreation,
+                    d.ClientId,
 
+                    Client = new
+                    {
+                        d.Client.Prenom,
+                        d.Client.Nom
+                    }
+
+                })
+                .ToList();
+
+            return Ok(dossiers);
+        }
 
     }
 }
