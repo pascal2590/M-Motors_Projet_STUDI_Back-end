@@ -1,6 +1,7 @@
 # Build folders
 bin/
 obj/
+wwwroot/uploads/documents/
 
 # Visual Studio
 .vs/
