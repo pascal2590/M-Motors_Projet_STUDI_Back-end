@@ -4,6 +4,7 @@ using m_motors_API.DTO;
 using m_motors_API.Models;
 using m_motors_API.Data;
 using m_motors_API.Enums;
+using System.Linq;
 
 namespace m_motors_API.Controllers
 {
@@ -284,6 +285,19 @@ namespace m_motors_API.Controllers
                     })
                     .ToList();
 
+                var services = (from vs in _context.VehiculeServiceLLDs
+                                join s in _context.ServiceLLDs
+                                on vs.IdService equals s.IdService
+                                where vs.IdVehicule == dossier.VehiculeId
+                                select new
+                                {
+                                    s.IdService,
+                                    s.NomService,
+                                    s.Description
+                                })
+                .ToList();
+
+
                 return Ok(new
                 {
                     dossier,
@@ -300,6 +314,8 @@ namespace m_motors_API.Controllers
                 });
             }
         }
+
+
 
         // DOSSIERS PAR CLIENT  
         [HttpGet("client/{clientId}")]
