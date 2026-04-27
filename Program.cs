@@ -54,6 +54,7 @@ builder.Services.AddCors(options =>
 
 // SERVICES
 builder.Services.AddScoped<TokenService>();
+// builder.Services.AddScoped<UtilisateurService>();
 
 // CONTROLLERS + JSON CONFIG
 builder.Services.AddControllers()

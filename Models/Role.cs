@@ -9,5 +9,7 @@ namespace m_motors_API.Models
         public string NomRole { get; set; }
 
         public ICollection<Utilisateur> Utilisateurs { get; set; }
+            = new List<Utilisateur>();
+
     }
 }
