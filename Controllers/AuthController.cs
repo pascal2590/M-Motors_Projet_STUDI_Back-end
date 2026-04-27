@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using m_motors_API.Data;
+﻿using m_motors_API.Data;
 using m_motors_API.DTO;
 using m_motors_API.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using LoginRequest = m_motors_API.DTO.LoginRequest;
+using RegisterRequest = m_motors_API.DTO.RegisterRequest;
 
 namespace m_motors_API.Controllers
 {
@@ -23,7 +26,21 @@ namespace m_motors_API.Controllers
             _tokenService = tokenService;
         }
 
-        // LOGIN CLIENT
+        // PING temporaire pour tester le controller
+        [HttpGet("ping")]
+        public IActionResult Ping()
+        {
+            return Ok("OK");
+        }
+
+        // Test temporaire pour vérifier que le controller est bien fonctionnel
+        [HttpGet("test")]
+        public IActionResult Test()
+        {
+            return Ok("AuthController OK");
+        }
+
+        // LOGIN CLIENT- Récupère le client dans la table Clients, vérifie le mot de passe et génère un token avec les infos nécessaires
         [HttpPost("client/login")]
         public IActionResult LoginClient([FromBody] ClientLoginRequest request)
         {
@@ -47,7 +64,7 @@ namespace m_motors_API.Controllers
             return Ok(new { token });
         }
 
-        // REGISTER CLIENT
+        // Créer un client (inscription)
         [HttpPost("client/register")]
         public IActionResult RegisterClient([FromBody] RegisterRequest request)
         {
@@ -79,13 +96,18 @@ namespace m_motors_API.Controllers
             return Ok(new { token });
         }
 
-        // LOGIN BACK-OFFICE
+        // LOGIN BACK-OFFICE - Récupère l'utilisateur dans la table Utilisateurs, vérifie le mot de passe et génère un token avec le rôle et les infos nécessaires
         [HttpPost("backoffice/login")]
         public IActionResult LoginBackOffice([FromBody] BackOfficeLoginRequest request)
         {
             var user = _context.Utilisateurs
                 .Include(u => u.Role)
                 .FirstOrDefault(u => u.Email == request.Email);
+
+            Console.WriteLine("EMAIL: " + request.Email);
+            Console.WriteLine("PASSWORD RAW: " + request.Password);
+
+            Console.WriteLine("USER FOUND: " + (user != null));
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
             {
@@ -102,27 +124,27 @@ namespace m_motors_API.Controllers
                 "",
                 ""
             );
-
-
             return Ok(new { token });
         }
 
-        // GET CURRENT CLIENT (/me)
+        // GET CURRENT CLIENT (/me) - Récupère les informations du client actuellement connecté
         [Authorize]
         [HttpGet("client/me")]
         public IActionResult GetCurrentClient()
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            var userIdClaim = User.FindFirst("nameid")?? User.FindFirst(ClaimTypes.NameIdentifier);
 
             if (userIdClaim == null)
             {
-                return Unauthorized(new { message = "Token invalide" });
+                return Unauthorized(new { message = "Token invalide ou userId manquant" });
             }
 
-            int clientId = int.Parse(userIdClaim.Value);
+            if (!int.TryParse(userIdClaim.Value, out int clientId))
+            {
+                return Unauthorized(new { message = "UserId invalide" });
+            }
 
-            var client = _context.Clients
-                .FirstOrDefault(c => c.IdClient == clientId);
+            var client = _context.Clients.FirstOrDefault(c => c.IdClient == clientId);
 
             if (client == null)
             {
@@ -139,5 +161,54 @@ namespace m_motors_API.Controllers
                 adresse = client.Adresse
             });
         }
+
+
+        // LOGIN GÉNÉRAL (client ou back-office) - Récupère l'utilisateur dans la table Clients ou Utilisateurs, vérifie le mot de passe et génère un token avec les infos nécessaires
+        [HttpPost("login")]
+        public IActionResult Login([FromBody] LoginRequest request)
+        {
+            // 1. Cherche dans les clients
+            var client = _context.Clients
+                .FirstOrDefault(c => c.Email == request.Email);
+
+            if (client != null &&
+                BCrypt.Net.BCrypt.Verify(request.Password, client.Password))
+            {
+                var token = _tokenService.GenerateToken(
+                    client.Email,
+                    "Client",
+                    "Client",
+                    client.IdClient,
+                    client.Prenom,
+                    client.Nom
+                );
+
+                return Ok(new { token });
+            }
+
+            // Cherche dans backoffice si pas trouvé dans clients
+            var user = _context.Utilisateurs
+                .Include(u => u.Role)
+                .FirstOrDefault(u => u.Email == request.Email);
+
+            if (user != null &&
+                BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
+            {
+                var roleName = user.Role?.NomRole ?? "Unknown";
+
+                var token = _tokenService.GenerateToken(
+                    user.Email,
+                    roleName,
+                    "BackOffice",
+                    user.IdUser,
+                    "",
+                    user.Nom
+                );
+
+                return Ok(new { token });
+            }
+            return Unauthorized(new { message = "Identifiants invalides" });
+        }
+
     }
 }
