@@ -105,7 +105,8 @@ namespace m_motors_API.Controllers
                 .FirstOrDefault(u => u.Email == request.Email);
 
             Console.WriteLine("EMAIL: " + request.Email);
-            Console.WriteLine("PASSWORD RAW: " + request.Password);
+            Console.WriteLine("PASSWORD CHECK START");
+            Console.WriteLine($"HASH EXISTS: {!string.IsNullOrEmpty(user?.Password)}");
 
             Console.WriteLine("USER FOUND: " + (user != null));
 
