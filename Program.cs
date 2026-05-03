@@ -9,14 +9,14 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// DATABASE
+// DATABASE - MySQL
 var connectionString = builder.Configuration.GetConnectionString("MMotorsConnection");
 
 builder.Services.AddDbContext<MMotorsContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
 );
 
-// Configuration de JWT
+// Configuration de JWT - Récupération de la clé secrète depuis appsettings.json et configuration de l'authentification JWT
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new Exception("JWT Key missing");
 var key = Encoding.UTF8.GetBytes(jwtKey);
 
@@ -27,6 +27,8 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
+    options.MapInboundClaims = false; // Debug l'erreur 404 sur enpoint -http://localhost:5119/api/Auth/client/me-
+
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -39,7 +41,8 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// CORS
+
+// CORS - Autoriser les requêtes depuis l'application Angular -http://localhost:4200- avec tous les headers et méthodes, et permettre l'envoi de cookies pour l'authentification
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
@@ -52,10 +55,12 @@ builder.Services.AddCors(options =>
     });
 });
 
-// SERVICES
-builder.Services.AddScoped<TokenService>();
 
-// CONTROLLERS + JSON CONFIG
+// SERVICES - Enregistrer les services nécessaires pour l'injection de dépendances dans les controllers, comme le TokenService pour la génération de JWT et le UtilisateurService pour la gestion des utilisateurs
+builder.Services.AddScoped<TokenService>();
+// builder.Services.AddScoped<UtilisateurService>();
+
+// CONTROLLERS + JSON CONFIG - Configurer les controllers pour utiliser les options JSON nécessaires, comme la conversion des enums en string, la gestion des références circulaires et l'indentation du JSON pour une meilleure lisibilité
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -67,7 +72,7 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.WriteIndented = true;
     });
 
-// SWAGGER CONFIG
+// SWAGGER CONFIG - Configurer Swagger pour la documentation de l'API, en ajoutant les informations de base comme le titre et la version, et en configurant la sécurité pour permettre l'authentification JWT directement depuis l'interface Swagger
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(c =>
@@ -107,14 +112,14 @@ builder.Services.AddSwaggerGen(c =>
     c.UseInlineDefinitionsForEnums();
 });
 
-// BUILD APP
+// BUILD APP - Construire l'application avec les configurations et services définis précédemment, et préparer le pipeline de traitement des requêtes
 var app = builder.Build();
 
 // AJOUT TEMPORAIRE POUR DEBUG
 app.UseDeveloperExceptionPage();
 
 
-// MIDDLEWARE
+// MIDDLEWARE - Configurer le pipeline de traitement des requêtes, en ajoutant les middlewares nécessaires pour Swagger, HTTPS, fichiers statiques, CORS, authentification et autorisation
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

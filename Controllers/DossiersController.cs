@@ -4,6 +4,7 @@ using m_motors_API.DTO;
 using m_motors_API.Models;
 using m_motors_API.Data;
 using m_motors_API.Enums;
+using System.Linq;
 
 namespace m_motors_API.Controllers
 {
@@ -68,7 +69,7 @@ namespace m_motors_API.Controllers
             _context.Dossiers.Add(dossier);
             _context.SaveChanges();
 
-            // DOCUMENTS OBLIGATOIRES ACHAT
+            // DOCUMENTS OBLIGATOIRES pour l'ACHAT
             var documents = new List<DocumentClient>
             {
                 new DocumentClient
@@ -151,7 +152,6 @@ namespace m_motors_API.Controllers
             _context.SaveChanges();
 
             // FINANCEMENT
-
             var financement = new DossierFinancement
             {
                 DossierId = dossier.IdDossier,
@@ -164,7 +164,7 @@ namespace m_motors_API.Controllers
 
             _context.DossierFinancements.Add(financement);
 
-            // DOCUMENTS OBLIGATOIRES LLD
+            // DOCUMENTS OBLIGATOIRES pour la LLD
             var documents = new List<DocumentClient>
             {
                 new DocumentClient
@@ -235,70 +235,86 @@ namespace m_motors_API.Controllers
             });
         }
 
-
         [HttpGet("{id}")]
         public IActionResult GetDossierById(int id)
         {
-            try
-            {
-                var dossier = _context.Dossiers
-                    .Where(d => d.IdDossier == id)
-                    .Select(d => new
-                    {
-                        d.IdDossier,
-                        d.TypeDossier,
-                        d.Statut,
-                        d.DateCreation,
-                        d.ClientId,
-                        d.VehiculeId
-                    })
-                    .FirstOrDefault();
-
-                if (dossier == null)
-                    return NotFound();
-
-                var vehicule = _context.Vehicules
-                    .Where(v => v.IdVehicule == dossier.VehiculeId)
-                    .Select(v => new
-                    {
-                        v.IdVehicule,
-                        v.Marque,
-                        v.Modele,
-                        v.Annee,
-                        v.Kilometrage,
-                        v.Prix,
-                        Description = v.Description ?? "",
-                        ImageUrl = v.ImageUrl ?? ""
-                    })
-                    .FirstOrDefault();
-
-                var documents = _context.Documents
-                    .Where(d => d.DossierId == id)
-                    .Select(d => new
-                    {
-                        d.IdDocument,
-                        NomDocument = d.NomDocument ?? "",
-                        TypeDocument = d.TypeDocument ?? "",
-                        CheminFichier = d.CheminFichier ?? "",
-                        DateUpload = d.DateUpload
-                    })
-                    .ToList();
-
-                return Ok(new
+            var dossier = _context.Dossiers
+                .Where(d => d.IdDossier == id)
+                .Select(d => new
                 {
-                    dossier,
-                    vehicule,
-                    documents
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
+                    d.IdDossier,
+                    d.TypeDossier,
+                    d.Statut,
+                    d.DateCreation,
+                    d.ClientId,
+                    d.VehiculeId
+                })
+                .FirstOrDefault();
+
+            if (dossier == null)
+                return NotFound();
+
+            var vehiculeId = dossier.VehiculeId;
+
+            var vehicule = _context.Vehicules
+                .Where(v => v.IdVehicule == vehiculeId)
+                .Select(v => new
                 {
-                    message = "Erreur serveur dossier",
-                    detail = ex.Message
-                });
+                    v.IdVehicule,
+                    v.Marque,
+                    v.Modele,
+                    v.Annee,
+                    v.Kilometrage,
+                    v.Prix,
+                    v.Description,
+                    v.ImageUrl
+                })
+                .FirstOrDefault();
+
+            Console.WriteLine("VEHICULE ID = " + vehiculeId);
+
+            var debugServices = _context.VehiculeServiceLLDs.ToList();
+            Console.WriteLine("TOTAL LIAISONS = " + debugServices.Count);
+
+            foreach (var s in debugServices)
+            {
+                Console.WriteLine($"vehicule:{s.IdVehicule} service:{s.IdService}");
             }
+
+            var services = new List<object>();
+
+            if (dossier.TypeDossier == TypeDossier.location)
+            {
+                services = _context.VehiculeServiceLLDs
+                    .Where(vs => vs.IdVehicule == vehiculeId)
+                    .Select(vs => new
+                    {
+                        vs.ServiceLLD.IdService,
+                        vs.ServiceLLD.NomService,
+                        vs.ServiceLLD.Description
+                    })
+                    .ToList<object>();
+            }
+
+            var documents = _context.Documents
+                .Where(d => d.DossierId == id)
+                .Select(d => new
+                {
+                    d.IdDocument,
+                    NomDocument = d.NomDocument ?? "",
+                    TypeDocument = d.TypeDocument ?? "",
+                    CheminFichier = d.CheminFichier ?? "",
+                    DateUpload = d.DateUpload
+                })
+                .ToList();
+
+            return Ok(new
+            {
+                dossier,
+                vehicule,
+                services,
+                documents
+            });
         }
 
         // DOSSIERS PAR CLIENT  
@@ -339,9 +355,6 @@ namespace m_motors_API.Controllers
             return Ok(dossiers);
         }
 
-
-
-
         [HttpGet]
         public IActionResult GetAll()
         {
@@ -365,6 +378,5 @@ namespace m_motors_API.Controllers
 
             return Ok(dossiers);
         }
-
     }
 }

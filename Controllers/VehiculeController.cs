@@ -33,7 +33,10 @@ namespace m_motors_API.Controllers
         public async Task<ActionResult<Vehicule>> GetVehicule(int id)
         {
             var vehicule = await _context.Vehicules
+                .Include(v => v.VehiculeServices)
+                    .ThenInclude(vs => vs.ServiceLLD)
                 .FirstOrDefaultAsync(v => v.IdVehicule == id);
+
 
             if (vehicule == null)
             {
@@ -60,6 +63,8 @@ namespace m_motors_API.Controllers
             }
 
             var vehicules = await _context.Vehicules
+                .Include(v => v.VehiculeServices)
+                    .ThenInclude(vs => vs.ServiceLLD)
                 .Where(v =>
                     v.TypeOffre == typeEnum &&
                     v.Disponible
@@ -68,6 +73,7 @@ namespace m_motors_API.Controllers
 
             return Ok(vehicules);
         }
+
 
         // POST: api/vehicule
         // Création véhicule     
@@ -117,10 +123,10 @@ namespace m_motors_API.Controllers
             }
 
             return NoContent();
-        }        
+        }
 
 
-        // CHECK EXISTENCE     
+        // Valider la disponibilité d'un véhicule (ex: après une vente ou une location)     
         private bool VehiculeExists(int id)
         {
             return _context.Vehicules.Any(e => e.IdVehicule == id);
