@@ -25,8 +25,7 @@ namespace m_motors_API.Models
         public ICollection<DocumentClient> Documents { get; set; }
 
         public ICollection<SuiviDossier> Suivis { get; set; }
-
-        // 🔥 AJOUT CRUCIAL
+        
         public ICollection<DossierFinancement> Financements { get; set; }
     }
 }

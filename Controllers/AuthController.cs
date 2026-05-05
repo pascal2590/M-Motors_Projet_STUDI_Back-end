@@ -1,5 +1,6 @@
 ﻿using m_motors_API.Data;
 using m_motors_API.DTO;
+using m_motors_API.Models;
 using m_motors_API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.Data;
@@ -163,12 +164,11 @@ namespace m_motors_API.Controllers
             });
         }
 
-
         // LOGIN GÉNÉRAL (client ou back-office) - Récupère l'utilisateur dans la table Clients ou Utilisateurs, vérifie le mot de passe et génère un token avec les infos nécessaires
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginRequest request)
         {
-            // 1. Cherche dans les clients
+            // CLIENT
             var client = _context.Clients
                 .FirstOrDefault(c => c.Email == request.Email);
 
@@ -184,10 +184,21 @@ namespace m_motors_API.Controllers
                     client.Nom
                 );
 
-                return Ok(new { token });
+                return Ok(new
+                {
+                    token,
+                    user = new
+                    {
+                        id = client.IdClient,
+                        nom = client.Nom,
+                        prenom = client.Prenom,
+                        email = client.Email,
+                        role = "Client"
+                    }
+                });
             }
 
-            // Cherche dans backoffice si pas trouvé dans clients
+            // BACKOFFICE
             var user = _context.Utilisateurs
                 .Include(u => u.Role)
                 .FirstOrDefault(u => u.Email == request.Email);
@@ -202,14 +213,24 @@ namespace m_motors_API.Controllers
                     roleName,
                     "BackOffice",
                     user.IdUser,
-                    "",
+                    "", // pas de prenom actuellement
                     user.Nom
                 );
 
-                return Ok(new { token });
+                return Ok(new
+                {
+                    token,
+                    user = new
+                    {
+                        id = user.IdUser,
+                        nom = user.Nom,
+                        prenom = "", // ⚠️ à améliorer plus tard
+                        email = user.Email,
+                        role = roleName
+                    }
+                });
             }
             return Unauthorized(new { message = "Identifiants invalides" });
         }
-
     }
 }
