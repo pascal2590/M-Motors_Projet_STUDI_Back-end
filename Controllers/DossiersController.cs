@@ -310,7 +310,15 @@ namespace m_motors_API.Controllers
 
             return Ok(new
             {
-                dossier,
+                dossier = new
+                {
+                    id = dossier.IdDossier,
+                    typeDossier = dossier.TypeDossier.ToString(),
+                    statut = dossier.Statut.ToString(),
+                    dateCreation = dossier.DateCreation.ToString("dd/MM/yyyy HH:mm"),
+                    clientId = dossier.ClientId,
+                    vehiculeId = dossier.VehiculeId
+                },
                 vehicule,
                 services,
                 documents
@@ -377,6 +385,30 @@ namespace m_motors_API.Controllers
                 .ToList();
 
             return Ok(dossiers);
+        }
+
+        [HttpPut("{id}/statut")]
+        public IActionResult UpdateStatut(int id, [FromBody] string nouveauStatut)
+        {
+            var dossier = _context.Dossiers.FirstOrDefault(d => d.IdDossier == id);
+
+            if (dossier == null)
+                return NotFound();
+
+            if (!Enum.TryParse<StatutDossier>(nouveauStatut, out var statut))
+                return BadRequest("Statut invalide");
+
+            dossier.Statut = statut;
+
+            _context.SaveChanges();
+
+            // A FAIRE : notification client (voir étape 3)
+
+            return Ok(new
+            {
+                message = "Statut mis à jour",
+                statut = dossier.Statut.ToString()
+            });
         }
     }
 }
