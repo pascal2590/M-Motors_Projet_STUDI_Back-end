@@ -126,7 +126,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // Commenté pour éviter les problèmes de certificat en développement, à réactiver en production
 
 app.UseStaticFiles();
 

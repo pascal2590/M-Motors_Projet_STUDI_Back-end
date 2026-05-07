@@ -21,13 +21,51 @@ namespace m_motors_API.Data
         public DbSet<Vehicule> Vehicules { get; set; }
         public DbSet<VehiculeServiceLLD> VehiculeServiceLLDs { get; set; }
         public DbSet<DossierFinancement> DossierFinancements { get; set; }
-
+        public DbSet<MessageClient> MessagesClients { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-    
+            // Table MESSAGE_CLIENT
+            modelBuilder.Entity<MessageClient>()
+                .ToTable("message_client")
+                .HasKey(m => m.IdMessage);
+
+            modelBuilder.Entity<MessageClient>()
+                .Property(m => m.IdMessage)
+                .HasColumnName("id_message");
+
+            modelBuilder.Entity<MessageClient>()
+                .Property(m => m.ClientId)
+                .HasColumnName("client_id");
+
+            modelBuilder.Entity<MessageClient>()
+                .Property(m => m.Sujet)
+                .HasColumnName("sujet");
+
+            modelBuilder.Entity<MessageClient>()
+                .Property(m => m.Contenu)
+                .HasColumnName("contenu");
+
+            modelBuilder.Entity<MessageClient>()
+                .Property(m => m.Lu)
+                .HasColumnName("lu");
+
+            modelBuilder.Entity<MessageClient>()
+                .Property(m => m.DateEnvoi)
+                .HasColumnName("date_envoi");
+
+            modelBuilder.Entity<SuiviDossier>()
+                .Property(s => s.DateModification)
+                .HasColumnName("date_modification");
+
+            modelBuilder.Entity<MessageClient>()
+                .HasOne(m => m.Client)
+                .WithMany(c => c.MessagesClients)
+                .HasForeignKey(m => m.ClientId);
+
+
             // Table CLIENT
             modelBuilder.Entity<Client>()
                 .ToTable("client")

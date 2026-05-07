@@ -235,29 +235,18 @@ namespace m_motors_API.Controllers
             });
         }
 
+        // DOSSIER PAR ID (Détails + Véhicule + Services + Documents)
         [HttpGet("{id}")]
         public IActionResult GetDossierById(int id)
         {
             var dossier = _context.Dossiers
-                .Where(d => d.IdDossier == id)
-                .Select(d => new
-                {
-                    d.IdDossier,
-                    d.TypeDossier,
-                    d.Statut,
-                    d.DateCreation,
-                    d.ClientId,
-                    d.VehiculeId
-                })
-                .FirstOrDefault();
+                .FirstOrDefault(d => d.IdDossier == id);
 
             if (dossier == null)
                 return NotFound();
 
-            var vehiculeId = dossier.VehiculeId;
-
             var vehicule = _context.Vehicules
-                .Where(v => v.IdVehicule == vehiculeId)
+                .Where(v => v.IdVehicule == dossier.VehiculeId)
                 .Select(v => new
                 {
                     v.IdVehicule,
@@ -271,22 +260,12 @@ namespace m_motors_API.Controllers
                 })
                 .FirstOrDefault();
 
-            Console.WriteLine("VEHICULE ID = " + vehiculeId);
-
-            var debugServices = _context.VehiculeServiceLLDs.ToList();
-            Console.WriteLine("TOTAL LIAISONS = " + debugServices.Count);
-
-            foreach (var s in debugServices)
-            {
-                Console.WriteLine($"vehicule:{s.IdVehicule} service:{s.IdService}");
-            }
-
             var services = new List<object>();
 
             if (dossier.TypeDossier == TypeDossier.location)
             {
                 services = _context.VehiculeServiceLLDs
-                    .Where(vs => vs.IdVehicule == vehiculeId)
+                    .Where(vs => vs.IdVehicule == dossier.VehiculeId)
                     .Select(vs => new
                     {
                         vs.ServiceLLD.IdService,
@@ -301,10 +280,26 @@ namespace m_motors_API.Controllers
                 .Select(d => new
                 {
                     d.IdDocument,
-                    NomDocument = d.NomDocument ?? "",
-                    TypeDocument = d.TypeDocument ?? "",
-                    CheminFichier = d.CheminFichier ?? "",
-                    DateUpload = d.DateUpload
+                    d.TypeDocument,
+                    d.CheminFichier,
+                    d.DateUpload
+                })
+                .ToList();
+
+            // Dernière mise à jour depuis suivi_dossier
+            var lastUpdate = _context.SuiviDossiers
+                .Where(s => s.DossierId == id)
+                .OrderByDescending(s => s.DateModification)
+                .Select(s => s.DateModification)
+                .FirstOrDefault();
+
+            var historique = _context.SuiviDossiers
+                .Where(s => s.DossierId == id)
+                .OrderBy(s => s.DateModification)
+                .Select(s => new
+                {
+                    statut = s.Statut.ToString(),
+                    date = s.DateModification
                 })
                 .ToList();
 
@@ -315,13 +310,14 @@ namespace m_motors_API.Controllers
                     id = dossier.IdDossier,
                     typeDossier = dossier.TypeDossier.ToString(),
                     statut = dossier.Statut.ToString(),
-                    dateCreation = dossier.DateCreation.ToString("dd/MM/yyyy HH:mm"),
+                    dateCreation = dossier.DateCreation,
                     clientId = dossier.ClientId,
                     vehiculeId = dossier.VehiculeId
                 },
                 vehicule,
                 services,
-                documents
+                documents,
+                historique
             });
         }
 
@@ -387,22 +383,86 @@ namespace m_motors_API.Controllers
             return Ok(dossiers);
         }
 
+        // MISE À JOUR STATUT + HISTORIQUE + NOTIFICATION CLIENT
         [HttpPut("{id}/statut")]
         public IActionResult UpdateStatut(int id, [FromBody] string nouveauStatut)
         {
             var dossier = _context.Dossiers.FirstOrDefault(d => d.IdDossier == id);
 
             if (dossier == null)
-                return NotFound();
+                return NotFound("Dossier introuvable");
 
-            if (!Enum.TryParse<StatutDossier>(nouveauStatut, out var statut))
+            if (!Enum.TryParse<StatutDossier>(nouveauStatut, true, out var statut))
                 return BadRequest("Statut invalide");
 
+            //Interdire la modification si déjà finalisé
+            if (dossier.Statut == StatutDossier.accepte || dossier.Statut == StatutDossier.refuse)
+            {
+                return BadRequest("Ce dossier est déjà finalisé et ne peut plus être modifié");
+            }
+
+            // Interdit un retour arrière
+            if (dossier.Statut == StatutDossier.en_etude && statut == StatutDossier.en_attente)
+            {
+                return BadRequest("Impossible de revenir à 'en attente' après étude");
+            }
+
+            // DOSSIER FINALISE
+            if (
+                dossier.Statut == StatutDossier.accepte ||
+                dossier.Statut == StatutDossier.refuse
+            )
+            {
+                return BadRequest(new
+                {
+                    message = "Ce dossier est déjà finalisé"
+                });
+            }
+
+            // RETOUR EN ARRIERE INTERDIT
+            if (
+                dossier.Statut == StatutDossier.en_etude &&
+                statut == StatutDossier.en_attente
+            )
+            {
+                return BadRequest(new
+                {
+                    message = "Impossible de revenir en arrière"
+                });
+            }
+
+            // MEME STATUT - PAS DE MODIFICATION
+            if (dossier.Statut == statut)
+            {
+                return BadRequest(new
+                {
+                    message = "Le dossier possède déjà ce statut"
+                });
+            }
+
+            // UPDATE
             dossier.Statut = statut;
 
-            _context.SaveChanges();
+            var userIdClaim = User.FindFirst("nameid");
+            int? userId = userIdClaim != null ? int.Parse(userIdClaim.Value) : null;
 
-            // A FAIRE : notification client (voir étape 3)
+            _context.SuiviDossiers.Add(new SuiviDossier
+            {
+                DossierId = id,
+                Statut = statut,
+                Commentaire = $"Statut changé vers {statut}",
+                DateModification = DateTime.Now,
+                UserId = userId
+            });
+
+            _context.MessagesClients.Add(new MessageClient
+            {
+                ClientId = dossier.ClientId ?? 0,
+                Sujet = $"Dossier #{id} mis à jour",
+                Contenu = $"Nouveau statut : {statut}"
+            });
+
+            _context.SaveChanges();
 
             return Ok(new
             {

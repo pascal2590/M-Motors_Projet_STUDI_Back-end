@@ -122,6 +122,24 @@ namespace m_motors_API.Controllers
             return Ok(user);
         }
 
+        // LISTE DE TOUS LES UTILISATEURS
+        [HttpGet("users")]
+        public IActionResult GetUsers()
+        {
+            var users = _context.Utilisateurs
+                .Include(u => u.Role)
+                .Select(u => new
+                {
+                    id = u.IdUser,
+                    nom = u.Nom,
+                    email = u.Email,
+                    role = u.Role.NomRole
+                })
+                .ToList();
+
+            return Ok(users);
+        }
+
         // Mise à jour d'un commercial
         [HttpPut("commercial/{id}")]
         public IActionResult UpdateCommercial(int id, [FromBody] UpdateCommercialRequest request)

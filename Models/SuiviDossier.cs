@@ -1,5 +1,6 @@
 ﻿using m_motors_API.Enums;
 using System;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace m_motors_API.Models
 {
@@ -11,6 +12,7 @@ namespace m_motors_API.Models
 
         public string Commentaire { get; set; }
 
+        [Column("date_modification")]
         public DateTime DateModification { get; set; }
 
         public int? DossierId { get; set; }
