@@ -35,5 +35,6 @@ namespace m_motors_API.Models
 
         // Relation optionnelle
         public ICollection<Dossier>? Dossiers { get; set; }
+        public ICollection<MessageClient> MessagesClients { get; set; } = new List<MessageClient>();
     }
 }
