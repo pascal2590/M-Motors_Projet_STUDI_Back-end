@@ -303,6 +303,17 @@ namespace m_motors_API.Controllers
                 })
                 .ToList();
 
+            var suivis = _context.SuiviDossiers
+                .Where(s => s.DossierId == id)
+                .OrderByDescending(s => s.DateModification)
+                .Select(s => new
+                {
+                    statut = s.Statut.ToString(),
+                    commentaire = s.Commentaire,
+                    dateModification = s.DateModification
+                })
+                .ToList();
+
             return Ok(new
             {
                 dossier = new
@@ -317,7 +328,8 @@ namespace m_motors_API.Controllers
                 vehicule,
                 services,
                 documents,
-                historique
+                historique,  // Historique pour le backoffice
+                suivis // Suivis détaillés pour le client
             });
         }
 
@@ -440,6 +452,28 @@ namespace m_motors_API.Controllers
                 });
             }
 
+            // VERIFICATION DOCUMENTS AVANT ACCEPTATION
+            if (statut == StatutDossier.accepte)
+            {
+                var documentsManquants = _context.Documents
+                    .Where(d =>
+                        d.DossierId == id &&
+                        (
+                            d.CheminFichier == null ||
+                            d.CheminFichier == ""
+                        )
+                    )
+                    .ToList();
+
+                if (documentsManquants.Any())
+                {
+                    return BadRequest(new
+                    {
+                        message = "Impossible d'accepter le dossier : des documents sont manquants"
+                    });
+                }
+            }
+
             // UPDATE
             dossier.Statut = statut;
 
@@ -455,13 +489,29 @@ namespace m_motors_API.Controllers
                 UserId = userId
             });
 
+            string statutLabel = statut switch
+            {
+                StatutDossier.en_attente => "En attente",
+                StatutDossier.en_etude => "En étude",
+                StatutDossier.accepte => "Accepté",
+                StatutDossier.refuse => "Refusé",
+                _ => statut.ToString()
+            };
+
             _context.MessagesClients.Add(new MessageClient
             {
                 ClientId = dossier.ClientId ?? 0,
-                Sujet = $"Dossier #{id} mis à jour",
-                Contenu = $"Nouveau statut : {statut}"
-            });
 
+                Sujet = $"Dossier #{id} mis à jour",
+
+                Contenu =
+                    "Bonjour,\n\n" +
+                    "Le statut de votre dossier a évolué.\n\n" +
+                    $"Nouveau statut : {statutLabel}\n\n" +
+                    "Cordialement,\n" +
+                    "M-Motors"
+            });
+            
             _context.SaveChanges();
 
             return Ok(new
