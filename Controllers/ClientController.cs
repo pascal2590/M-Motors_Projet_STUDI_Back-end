@@ -4,6 +4,7 @@ using m_motors_API.Data;
 using m_motors_API.Models;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using m_motors_API.DTOs;
 
 namespace m_motors_API.Controllers
 {
@@ -18,8 +19,8 @@ namespace m_motors_API.Controllers
             _context = context;
         }
 
-        
-        // CREATE CLIENT        
+
+        // Créer un nouveau client
         [HttpPost]
         public async Task<ActionResult<Client>> CreateClient(Client client)
         {
@@ -36,7 +37,7 @@ namespace m_motors_API.Controllers
         }
 
         
-        // GET MY DOSSIERS (JWT - PROPRE)        
+        // Voir mes dossiers (JWT - PROPRE)        
         [Authorize]
         [HttpGet("dossiers")]
         public IActionResult GetMyDossiers()
@@ -73,7 +74,7 @@ namespace m_motors_API.Controllers
                         IdDocument = doc.IdDocument,
                         NomDocument = doc.NomDocument,
                         TypeDocument = doc.TypeDocument,
-                        DateUpload = doc.DateUpload,
+                        DateUpload = doc.DateAjout,
                         CheminFichier = doc.CheminFichier
                     }).ToList()
                 })
@@ -83,7 +84,7 @@ namespace m_motors_API.Controllers
             return Ok(dossiers);
         }
 
-        // GET DOSSIER DETAIL (IMPORTANT POUR TON FRONT)        
+        // Voir le détail d'un dossier spécifique (JWT - PROPRE)  
         [Authorize]
         [HttpGet("dossiers/{id}")]
         public IActionResult GetDossierById(int id)

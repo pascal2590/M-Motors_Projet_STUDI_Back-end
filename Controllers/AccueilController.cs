@@ -19,10 +19,10 @@ namespace m_motors_API.Controllers
         [HttpGet]
         public IActionResult GetAccueil()
         {
-            // Exemple : récupérer les 5 derniers véhicules disponibles
+            // Exemple : On récupére les 5 derniers véhicules disponibles
             var vehicules = _context.Vehicules
                 .Where(v => v.Disponible) // Ajout de ce champ pour filtrer les véhicules disponibles
-                .OrderByDescending(v => v.DateUpload)
+                .OrderByDescending(v => v.DateAjout)
                 .Take(5)
                 .Select(v => new
                 {

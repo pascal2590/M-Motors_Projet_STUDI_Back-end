@@ -20,7 +20,7 @@ namespace m_motors_API.Models
         public string? CheminFichier { get; set; }
 
         [Column("date_upload")]
-        public DateTime? DateUpload { get; set; }
+        public DateTime? DateAjout { get; set; }
 
         [Column("dossier_id")]
         public int? DossierId { get; set; }

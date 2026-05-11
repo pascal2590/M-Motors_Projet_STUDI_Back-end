@@ -78,7 +78,7 @@ namespace m_motors_API.Controllers
                     TypeDocument = "identite",
                     NomDocument = null,
                     CheminFichier = null,
-                    DateUpload = null
+                    DateAjout = null
                 },
 
                 new DocumentClient
@@ -87,7 +87,7 @@ namespace m_motors_API.Controllers
                     TypeDocument = "domicile",
                     NomDocument = null,
                     CheminFichier = null,
-                    DateUpload = null
+                    DateAjout = null
                 },
 
                 new DocumentClient
@@ -96,7 +96,7 @@ namespace m_motors_API.Controllers
                     TypeDocument = "revenus",
                     NomDocument = null,
                     CheminFichier = null,
-                    DateUpload = null
+                    DateAjout = null
                 },
 
                 new DocumentClient
@@ -105,7 +105,7 @@ namespace m_motors_API.Controllers
                     TypeDocument = "rib",
                     NomDocument = null,
                     CheminFichier = null,
-                    DateUpload = null
+                    DateAjout = null
                 }
             };
 
@@ -173,7 +173,7 @@ namespace m_motors_API.Controllers
                     TypeDocument = "identite",
                     NomDocument = null,
                     CheminFichier = null,
-                    DateUpload = null
+                    DateAjout = null
                 },
 
                 new DocumentClient
@@ -182,7 +182,7 @@ namespace m_motors_API.Controllers
                     TypeDocument = "domicile",
                     NomDocument = null,
                     CheminFichier = null,
-                    DateUpload = null
+                    DateAjout = null
                 },
 
                 new DocumentClient
@@ -191,7 +191,7 @@ namespace m_motors_API.Controllers
                     TypeDocument = "revenus",
                     NomDocument = null,
                     CheminFichier = null,
-                    DateUpload = null
+                    DateAjout = null
                 },
 
                 new DocumentClient
@@ -200,7 +200,7 @@ namespace m_motors_API.Controllers
                     TypeDocument = "rib",
                     NomDocument = null,
                     CheminFichier = null,
-                    DateUpload = null
+                    DateAjout = null
                 },
 
                 new DocumentClient
@@ -209,7 +209,7 @@ namespace m_motors_API.Controllers
                     TypeDocument = "permis",
                     NomDocument = null,
                     CheminFichier = null,
-                    DateUpload = null
+                    DateAjout = null
                 }
             };
 
@@ -282,7 +282,7 @@ namespace m_motors_API.Controllers
                     d.IdDocument,
                     d.TypeDocument,
                     d.CheminFichier,
-                    d.DateUpload
+                    d.DateAjout
                 })
                 .ToList();
 

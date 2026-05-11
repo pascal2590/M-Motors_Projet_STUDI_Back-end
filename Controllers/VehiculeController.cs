@@ -1,8 +1,14 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+
 using Microsoft.EntityFrameworkCore;
+
 using m_motors_API.Data;
+
 using m_motors_API.Models;
+
 using m_motors_API.Enums;
+
+using m_motors_API.DTOs;
 
 namespace m_motors_API.Controllers
 {
@@ -12,7 +18,9 @@ namespace m_motors_API.Controllers
     {
         private readonly MMotorsContext _context;
 
-        public VehiculeController(MMotorsContext context)
+        public VehiculeController(
+            MMotorsContext context
+        )
         {
             _context = context;
         }
@@ -20,29 +28,41 @@ namespace m_motors_API.Controllers
         // GET: api/vehicule
         // Liste tous les véhicules disponibles
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Vehicule>>> GetVehicules()
+        public async Task<
+            ActionResult<IEnumerable<Vehicule>>
+        > GetVehicules()
         {
-            return await _context.Vehicules
+            var vehicules = await _context
+                .Vehicules
+                .Include(v => v.VehiculeServices)
+                    .ThenInclude(vs => vs.ServiceLLD)
                 .Where(v => v.Disponible)
                 .ToListAsync();
+
+            return Ok(vehicules);
         }
 
         // GET: api/vehicule/5
         // Détail d'un véhicule
         [HttpGet("{id}")]
-        public async Task<ActionResult<Vehicule>> GetVehicule(int id)
+        public async Task<
+            ActionResult<Vehicule>
+        > GetVehicule(int id)
         {
-            var vehicule = await _context.Vehicules
+            var vehicule = await _context
+                .Vehicules
                 .Include(v => v.VehiculeServices)
                     .ThenInclude(vs => vs.ServiceLLD)
-                .FirstOrDefaultAsync(v => v.IdVehicule == id);
-
+                .FirstOrDefaultAsync(
+                    v => v.IdVehicule == id
+                );
 
             if (vehicule == null)
             {
                 return NotFound(new
                 {
-                    message = "Véhicule introuvable"
+                    message =
+                        "Véhicule introuvable"
                 });
             }
 
@@ -52,21 +72,34 @@ namespace m_motors_API.Controllers
         // GET: api/vehicule/type/location
         // Filtrer par type d'offre
         [HttpGet("type/{type}")]
-        public async Task<ActionResult<IEnumerable<Vehicule>>> GetVehiculesByType(string type)
+        public async Task<
+            ActionResult<IEnumerable<Vehicule>>
+        > GetVehiculesByType(
+            string type
+        )
         {
-            if (!Enum.TryParse<TypeOffre>(type, true, out var typeEnum))
+            if (
+                !Enum.TryParse<TypeOffre>(
+                    type,
+                    true,
+                    out var typeEnum
+                )
+            )
             {
                 return BadRequest(new
                 {
-                    message = "Type invalide (vente, location)"
+                    message =
+                        "Type invalide (vente, location)"
                 });
             }
 
-            var vehicules = await _context.Vehicules
+            var vehicules = await _context
+                .Vehicules
                 .Include(v => v.VehiculeServices)
                     .ThenInclude(vs => vs.ServiceLLD)
                 .Where(v =>
-                    v.TypeOffre == typeEnum &&
+                    v.TypeOffre == typeEnum
+                    &&
                     v.Disponible
                 )
                 .ToListAsync();
@@ -74,62 +107,239 @@ namespace m_motors_API.Controllers
             return Ok(vehicules);
         }
 
-
         // POST: api/vehicule
-        // Création véhicule     
+        // Création véhicule
         [HttpPost]
-        public async Task<ActionResult<Vehicule>> CreateVehicule(Vehicule vehicule)
+        public async Task<
+            ActionResult<Vehicule>
+        > CreateVehicule(
+            VehiculeDto dto
+        )
         {
-            vehicule.Disponible = true;
+            var vehicule = new Vehicule
+            {
+                Marque = dto.Marque,
 
-            _context.Vehicules.Add(vehicule);
-            await _context.SaveChangesAsync();
+                Modele = dto.Modele,
+
+                Annee = dto.Annee,
+
+                Kilometrage = dto.Kilometrage,
+
+                Prix = dto.Prix,
+
+                Description = dto.Description,
+
+                TypeOffre = dto.TypeOffre,
+
+                Disponible = dto.Disponible,
+
+                ImageUrl = dto.ImageUrl
+            };
+
+            _context.Vehicules.Add(
+                vehicule
+            );
+
+            await _context
+                .SaveChangesAsync();
+
+            // SERVICES LLD
+            if (
+                dto.TypeOffre
+                    == TypeOffre.location
+                &&
+                dto.ServicesLld != null
+            )
+            {
+                foreach (
+                    var serviceId
+                    in dto.ServicesLld
+                )
+                {
+                    _context
+                        .VehiculeServiceLLDs
+                        .Add(
+
+                        new VehiculeServiceLLD
+                        {
+                            IdVehicule =
+                                vehicule.IdVehicule,
+
+                            IdService =
+                                serviceId
+                        });
+                }
+
+                await _context
+                    .SaveChangesAsync();
+            }
 
             return CreatedAtAction(
+
                 nameof(GetVehicule),
-                new { id = vehicule.IdVehicule },
+
+                new
+                {
+                    id =
+                        vehicule.IdVehicule
+                },
+
                 vehicule
             );
         }
 
-  
         // PUT: api/vehicule/5
-        // Modification véhicule    
+        // Modification véhicule
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateVehicule(int id, Vehicule vehicule)
+        public async Task<IActionResult>
+            UpdateVehicule(
+                int id,
+                VehiculeDto dto
+            )
         {
-            if (id != vehicule.IdVehicule)
+            var vehicule = await _context
+                .Vehicules
+                .Include(v =>
+                    v.VehiculeServices)
+                .FirstOrDefaultAsync(
+                    v =>
+                        v.IdVehicule == id
+                );
+
+            if (vehicule == null)
             {
-                return BadRequest(new
+                return NotFound(new
                 {
-                    message = "ID incohérent"
+                    message =
+                        "Véhicule introuvable"
                 });
             }
 
-            _context.Entry(vehicule).State = EntityState.Modified;
+            // UPDATE VEHICULE
+            vehicule.Marque =
+                dto.Marque;
 
-            try
+            vehicule.Modele =
+                dto.Modele;
+
+            vehicule.Annee =
+                dto.Annee;
+
+            vehicule.Kilometrage =
+                dto.Kilometrage;
+
+            vehicule.Prix =
+                dto.Prix;
+
+            vehicule.Description =
+                dto.Description;
+
+            vehicule.TypeOffre =
+                dto.TypeOffre;
+
+            vehicule.Disponible =
+                dto.Disponible;
+
+            vehicule.ImageUrl =
+                dto.ImageUrl;
+
+            // Suppression des anciens services liés au véhicule
+            var existingServices =
+
+                _context
+                .VehiculeServiceLLDs
+                .Where(v =>
+                    v.IdVehicule == id);
+
+            _context
+                .VehiculeServiceLLDs
+                .RemoveRange(
+                    existingServices
+                );
+
+            // Ajout des nouveaux services liés au véhicule
+            if (
+                dto.TypeOffre
+                    == TypeOffre.location
+                &&
+                dto.ServicesLld != null
+            )
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!VehiculeExists(id))
+                foreach (
+                    var serviceId
+                    in dto.ServicesLld
+                )
                 {
-                    return NotFound();
-                }
+                    _context
+                        .VehiculeServiceLLDs
+                        .Add(
 
-                throw;
+                        new VehiculeServiceLLD
+                        {
+                            IdVehicule = id,
+
+                            IdService =
+                                serviceId
+                        });
+                }
             }
+
+            await _context
+                .SaveChangesAsync();
 
             return NoContent();
         }
 
-
-        // Valider la disponibilité d'un véhicule (ex: après une vente ou une location)     
-        private bool VehiculeExists(int id)
+        // DELETE: api/vehicule/5
+        // Suppression d'unvéhicule
+        [HttpDelete("{id}")]
+        public async Task<IActionResult>
+            DeleteVehicule(int id)
         {
-            return _context.Vehicules.Any(e => e.IdVehicule == id);
+            var vehicule = await _context
+                .Vehicules
+                .FindAsync(id);
+
+            if (vehicule == null)
+            {
+                return NotFound(new
+                {
+                    message =
+                        "Véhicule introuvable"
+                });
+            }
+
+            // Suppression des services LLD liés au véhicule
+            var services = _context
+                .VehiculeServiceLLDs
+                .Where(v =>
+                    v.IdVehicule == id);
+
+            _context
+                .VehiculeServiceLLDs
+                .RemoveRange(services);
+
+            // Suppression du véhicule
+            _context
+                .Vehicules
+                .Remove(vehicule);
+
+            await _context
+                .SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        // Vérifier existence véhicule
+        private bool VehiculeExists(
+            int id
+        )
+        {
+            return _context
+                .Vehicules
+                .Any(e =>
+                    e.IdVehicule == id);
         }
     }
 }

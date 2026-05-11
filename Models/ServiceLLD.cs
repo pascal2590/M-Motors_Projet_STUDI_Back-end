@@ -9,7 +9,7 @@ namespace m_motors_API.Models
         public string NomService { get; set; }
 
         public string Description { get; set; }
-
-        public ICollection<VehiculeServiceLLD> VehiculeServices { get; set; }
+        
+        public ICollection<VehiculeServiceLLD> VehiculeServices { get; set; } = new List<VehiculeServiceLLD>();
     }
 }

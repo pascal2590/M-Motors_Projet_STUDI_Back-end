@@ -88,7 +88,7 @@ namespace m_motors_API.Controllers
                     TypeDocument = model.TypeDocument,
                     NomDocument = model.File.FileName,
                     CheminFichier = $"uploads/documents/{fileName}",
-                    DateUpload = DateTime.Now
+                    DateAjout = DateTime.Now
                 };
 
                 _context.Documents.Add(document);
@@ -148,7 +148,7 @@ namespace m_motors_API.Controllers
                     d.IdDocument,
                     d.NomDocument,
                     d.TypeDocument,
-                    d.DateUpload,
+                    d.DateAjout,
                     d.CheminFichier
                 })
                 .ToList();
