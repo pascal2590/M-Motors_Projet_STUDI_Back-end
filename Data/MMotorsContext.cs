@@ -185,20 +185,58 @@ namespace m_motors_API.Data
             #endregion
 
             #region DOSSIER_FINANCEMENT
-            modelBuilder.Entity<DossierFinancement>().ToTable("dossier_financement").HasKey(df => df.Id);
-            modelBuilder.Entity<DossierFinancement>().Property(df => df.Id).HasColumnName("id");
-            modelBuilder.Entity<DossierFinancement>().Property(df => df.DossierId).HasColumnName("dossier_id");
-            modelBuilder.Entity<DossierFinancement>().HasOne<Dossier>().WithOne().HasForeignKey<DossierFinancement>(df => df.DossierId).OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<DossierFinancement>(entity =>
+            {
+                entity.ToTable("dossier_financement");
+
+                entity.HasKey(df => df.Id);
+
+                entity.Property(df => df.Id)
+                    .HasColumnName("id");
+
+                entity.Property(df => df.DossierId)
+                    .HasColumnName("dossier_id");
+
+                entity.HasOne(df => df.Dossier)
+                    .WithMany(d => d.Financements)
+                    .HasForeignKey(df => df.DossierId)
+                    .HasConstraintName("fk_dossier_financement")
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
             #endregion
 
             #region SUIVI_DOSSIER
-            modelBuilder.Entity<SuiviDossier>().ToTable("suivi_dossier").HasKey(s => s.IdSuivi);
-            modelBuilder.Entity<SuiviDossier>().HasOne<Dossier>().WithMany().HasForeignKey(s => s.DossierId);
-            modelBuilder.Entity<SuiviDossier>().HasOne<Utilisateur>().WithMany().HasForeignKey(s => s.UserId);
 
-            modelBuilder.Entity<SuiviDossier>().Property(s => s.IdSuivi).HasColumnName("id_suivi");
-            modelBuilder.Entity<SuiviDossier>().Property(s => s.DossierId).HasColumnName("dossier_id");
-            modelBuilder.Entity<SuiviDossier>().Property(s => s.UserId).HasColumnName("user_id");
+            modelBuilder.Entity<SuiviDossier>(entity =>
+            {
+                entity.ToTable("suivi_dossier");
+
+                entity.HasKey(s => s.IdSuivi);
+
+                entity.Property(s => s.IdSuivi)
+                    .HasColumnName("id_suivi");
+
+                entity.Property(s => s.DossierId)
+                    .HasColumnName("dossier_id");
+
+                entity.Property(s => s.UserId)
+                    .HasColumnName("user_id");
+
+                // Attention : utiliser les NAVIGATION PROPERTIES
+                entity.HasOne(s => s.Dossier)
+                    .WithMany(d => d.Suivis)
+                    .HasForeignKey(s => s.DossierId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(s => s.Utilisateur)
+                    .WithMany(u => u.Suivis) // IMPORTANT même si vide ensuite
+                    .HasForeignKey(s => s.UserId)
+                    .HasConstraintName("fk_suivi_utilisateur")
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
             #endregion
         }
     }

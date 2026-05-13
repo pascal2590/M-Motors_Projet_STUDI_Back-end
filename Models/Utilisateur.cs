@@ -14,7 +14,6 @@
 
         public Role Role { get; set; }
 
-        public ICollection<SuiviDossier> Suivis { get; set; }
-            = new List<SuiviDossier>();
+        public ICollection<SuiviDossier> Suivis { get; set; }            
     }
 }

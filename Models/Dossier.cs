@@ -25,7 +25,7 @@ namespace m_motors_API.Models
         public ICollection<DocumentClient> Documents { get; set; }
 
         public ICollection<SuiviDossier> Suivis { get; set; }
-        
-        public ICollection<DossierFinancement> Financements { get; set; }
+
+        public ICollection<DossierFinancement> Financements { get; set; } = new List<DossierFinancement>();
     }
 }
