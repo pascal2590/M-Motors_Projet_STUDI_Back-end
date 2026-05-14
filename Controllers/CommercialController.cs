@@ -27,11 +27,13 @@ namespace m_motors_API.Controllers
             var dossiers = _context.Dossiers
                 .Include(d => d.Client)
                 .Include(d => d.Vehicule)
-                // .Where(d => d.CommercialId == int.Parse(userId)) // si on ajoute la relation
+                .OrderByDescending(d => d.DateCreation)
                 .Select(d => new
                 {
                     id = d.IdDossier,
-                    client = d.Client != null ? d.Client.Nom : "N/A",
+                    client = d.Client != null
+                        ? d.Client.Prenom + " " + d.Client.Nom
+                        : "N/A",
                     vehicule = d.Vehicule != null
                         ? d.Vehicule.Marque + " " + d.Vehicule.Modele
                         : "N/A",

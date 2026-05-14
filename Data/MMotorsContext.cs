@@ -117,6 +117,7 @@ namespace m_motors_API.Data
 
             modelBuilder.Entity<Utilisateur>().Property(u => u.IdUser).HasColumnName("id_user");
             modelBuilder.Entity<Utilisateur>().Property(u => u.Nom).HasColumnName("nom");
+            modelBuilder.Entity<Utilisateur>().Property(u => u.Prenom).HasColumnName("prenom");
             modelBuilder.Entity<Utilisateur>().Property(u => u.Email).HasColumnName("email");
             modelBuilder.Entity<Utilisateur>().Property(u => u.Password).HasColumnName("password");
             modelBuilder.Entity<Utilisateur>().Property(u => u.RoleId).HasColumnName("role_id");

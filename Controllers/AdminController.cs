@@ -45,6 +45,7 @@ namespace m_motors_API.Controllers
             var user = new Utilisateur
             {
                 Nom = request.Nom,
+                Prenom = request.Prenom,
                 Email = request.Email,
                 Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
                 RoleId = role.IdRole
@@ -67,6 +68,7 @@ namespace m_motors_API.Controllers
                 {
                     u.IdUser,
                     u.Nom,
+                    u.Prenom,
                     u.Email
                 })
                 .ToList();
@@ -132,6 +134,7 @@ namespace m_motors_API.Controllers
                 {
                     id = u.IdUser,
                     nom = u.Nom,
+                    prenom = u.Prenom, // Ajouté le 14/05/2026
                     email = u.Email,
                     role = u.Role.NomRole
                 })

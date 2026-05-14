@@ -213,7 +213,7 @@ namespace m_motors_API.Controllers
                     roleName,
                     "BackOffice",
                     user.IdUser,
-                    "", // pas de prenom actuellement
+                    user.Prenom, // Ajouté le 14/05/2026
                     user.Nom
                 );
 
@@ -224,7 +224,7 @@ namespace m_motors_API.Controllers
                     {
                         id = user.IdUser,
                         nom = user.Nom,
-                        prenom = "", // ⚠️ à améliorer plus tard
+                        prenom = user.Prenom,                        
                         email = user.Email,
                         role = roleName
                     }
