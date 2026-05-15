@@ -71,6 +71,12 @@ namespace m_motors_API.Data
 
             #region DOSSIER
             modelBuilder.Entity<Dossier>()
+                .HasOne(d => d.Commercial)
+                .WithMany()
+                .HasForeignKey(d => d.CommercialId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Dossier>()
                 .ToTable("dossier")
                 .HasKey(d => d.IdDossier);
 

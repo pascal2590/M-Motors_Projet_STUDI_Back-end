@@ -1,5 +1,6 @@
 ﻿public class DossierCommercialDto
 {
+    public string Commercial { get; set; }
     public int Id { get; set; }
     public string Client { get; set; }
     public string Vehicule { get; set; }

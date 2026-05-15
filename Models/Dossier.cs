@@ -1,6 +1,7 @@
 ﻿using m_motors_API.Enums;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace m_motors_API.Models
 {
@@ -21,6 +22,11 @@ namespace m_motors_API.Models
         public Client Client { get; set; }
 
         public Vehicule Vehicule { get; set; }
+
+        [Column("commercial_id")]
+        public int? CommercialId { get; set; }
+
+        public Utilisateur Commercial { get; set; }
 
         public ICollection<DocumentClient> Documents { get; set; }
 

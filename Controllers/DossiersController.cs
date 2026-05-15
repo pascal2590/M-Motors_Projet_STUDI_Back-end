@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using m_motors_API.Data;
 using m_motors_API.DTO;
-using m_motors_API.Models;
-using m_motors_API.Data;
 using m_motors_API.Enums;
+using m_motors_API.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using System.Security.Claims;
 
 namespace m_motors_API.Controllers
 {
@@ -13,7 +15,6 @@ namespace m_motors_API.Controllers
     public class DossiersController : ControllerBase
     {
         private readonly MMotorsContext _context;
-
         public DossiersController(MMotorsContext context)
         {
             _context = context;
@@ -46,7 +47,6 @@ namespace m_motors_API.Controllers
 
             return (client, vehicule, null);
         }
-
 
         // ACHAT
         [HttpPost("achat")]
@@ -338,13 +338,18 @@ namespace m_motors_API.Controllers
         public IActionResult GetByClient(int clientId)
         {
             var dossiers = _context.Dossiers
+                .Include(d => d.Commercial)
                 .Where(d => d.ClientId == clientId)
                 .Select(d => new
                 {
                     d.IdDossier,
-                    d.TypeDossier,
-                    d.Statut,
-                    d.DateCreation,
+                    typeDossier = d.TypeDossier.ToString(),
+                    statut = d.Statut.ToString(),
+                    dateCreation = d.DateCreation,
+
+                    commercial = d.Commercial != null
+                        ? d.Commercial.Prenom + " " + d.Commercial.Nom
+                        : "Non assigné",
 
                     Vehicule = new
                     {
@@ -518,6 +523,31 @@ namespace m_motors_API.Controllers
             {
                 message = "Statut mis à jour",
                 statut = dossier.Statut.ToString()
+            });
+        }
+
+        [HttpPut("{id}/assign")]
+        [Authorize(Roles = "Commercial")]
+        public IActionResult AssignCommercial(int id)
+        {
+            var dossier = _context.Dossiers.FirstOrDefault(d => d.IdDossier == id);
+
+            if (dossier == null)
+                return NotFound("Dossier introuvable");
+
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null)
+                return Unauthorized();
+
+            dossier.CommercialId = int.Parse(userId);
+
+            _context.SaveChanges();
+
+            return Ok(new
+            {
+                message = "Dossier assigné",
+                commercialId = dossier.CommercialId
             });
         }
     }

@@ -1,6 +1,6 @@
 ﻿using m_motors_API.DTOs;
 public class DossierDto
-{
+{    
     public int IdDossier { get; set; }
     public string TypeDossier { get; set; }
     public string Statut { get; set; }

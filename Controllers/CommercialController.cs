@@ -27,24 +27,31 @@ namespace m_motors_API.Controllers
             var dossiers = _context.Dossiers
                 .Include(d => d.Client)
                 .Include(d => d.Vehicule)
+                .Include(d => d.Commercial) // ⚠️ AJOUT IMPORTANT
                 .OrderByDescending(d => d.DateCreation)
                 .Select(d => new
                 {
                     id = d.IdDossier,
+
                     client = d.Client != null
                         ? d.Client.Prenom + " " + d.Client.Nom
                         : "N/A",
+
                     vehicule = d.Vehicule != null
                         ? d.Vehicule.Marque + " " + d.Vehicule.Modele
                         : "N/A",
+
                     status = d.Statut.ToString(),
                     typeDossier = d.TypeDossier.ToString(),
-                    dateCreation = d.DateCreation.ToString("dd/MM/yyyy")
+                    dateCreation = d.DateCreation.ToString("dd/MM/yyyy"),
+
+                    commercial = d.Commercial != null
+                        ? d.Commercial.Prenom + " " + d.Commercial.Nom
+                        : "Non assigné"
                 })
                 .ToList();
 
             return Ok(dossiers);
         }
-
     }
 }
