@@ -27,7 +27,7 @@ namespace m_motors_API.Controllers
             var dossiers = _context.Dossiers
                 .Include(d => d.Client)
                 .Include(d => d.Vehicule)
-                .Include(d => d.Commercial) // ⚠️ AJOUT IMPORTANT
+                .Include(d => d.Commercial)
                 .OrderByDescending(d => d.DateCreation)
                 .Select(d => new
                 {
