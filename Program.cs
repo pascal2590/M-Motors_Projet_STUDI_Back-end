@@ -9,6 +9,19 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// CONFIGURATION - Configurer les options pour les serveurs IIS et Kestrel afin d'augmenter la limite de taille des requêtes,
+// ce qui est nécessaire pour permettre le téléchargement de fichiers volumineux, comme les documents ou les images, jusqu'à 50 Mo
+builder.Services.Configure<IISServerOptions>(options =>
+{
+    options.MaxRequestBodySize = 52428800;
+});
+
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.Limits.MaxRequestBodySize = 52428800;
+});
+
+
 // DATABASE - MySQL
 var connectionString = builder.Configuration.GetConnectionString("MMotorsConnection");
 

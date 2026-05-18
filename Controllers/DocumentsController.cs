@@ -27,19 +27,63 @@ namespace m_motors_API.Controllers
             {
                 if (model == null || model.File == null || model.File.Length == 0)
                 {
-                    return Ok(new
+                    return BadRequest(new
                     {
                         success = false,
                         message = "Fichier invalide"
                     });
                 }
 
+                // Taille max <= 5 Mo
+                const long maxFileSize = 5 * 1024 * 1024;
+
+                if (model.File.Length > maxFileSize)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Le fichier dépasse la taille maximale autorisée de 5 Mo"
+                    });
+                }
+
+                // Extensions autorisées
+                var allowedExtensions = new[] { ".pdf", ".jpg", ".jpeg", ".png" };
+
+                var extension = Path.GetExtension(model.File.FileName).ToLower();
+
+                if (!allowedExtensions.Contains(extension))
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Format de fichier non autorisé. Formats acceptés : PDF, JPG, PNG"
+                    });
+                }
+
+                // Vérification MIME TYPE - sécurité supplémentaire
+                var allowedMimeTypes = new[]
+                {
+                    "application/pdf",
+                    "image/jpeg",
+                    "image/png"
+                };
+
+                if (!allowedMimeTypes.Contains(model.File.ContentType))
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Type MIME invalide"
+                    });
+                }
+
+                // Vérifie que le dossier existe
                 var dossier = await _context.Dossiers
                     .FirstOrDefaultAsync(d => d.IdDossier == model.DossierId);
 
                 if (dossier == null)
                 {
-                    return Ok(new
+                    return BadRequest(new
                     {
                         success = false,
                         message = "Dossier introuvable"
