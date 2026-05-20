@@ -110,5 +110,25 @@ namespace m_motors_API.Controllers
 
             return Ok(dossier);
         }
+
+        // Liste de tous les clients (JWT - PROPRE)
+        [Authorize(Roles = "Administrateur,Commercial")]
+        [HttpGet]
+        public IActionResult GetClients()
+        {
+            var clients = _context.Clients
+                .Select(c => new
+                {
+                    c.IdClient,
+                    c.Nom,
+                    c.Prenom,
+                    c.Email,
+                    c.Telephone,
+                    c.Adresse
+                })
+                .ToList();
+
+            return Ok(clients);
+        }
     }
 }
