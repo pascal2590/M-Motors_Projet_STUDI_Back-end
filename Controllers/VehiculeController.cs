@@ -28,15 +28,28 @@ namespace m_motors_API.Controllers
         // GET: api/vehicule
         // Liste tous les véhicules disponibles
         [HttpGet]
-        public async Task<
-            ActionResult<IEnumerable<Vehicule>>
-        > GetVehicules()
+        public async Task<ActionResult<IEnumerable<object>>> GetVehicules()
         {
-            var vehicules = await _context
-                .Vehicules
+            var vehicules = await _context.Vehicules
                 .Include(v => v.VehiculeServices)
-                    .ThenInclude(vs => vs.ServiceLLD)
+                .ThenInclude(vs => vs.ServiceLLD)
                 .Where(v => v.Disponible)
+                .Select(v => new
+                {
+                    idVehicule = v.IdVehicule,
+                    marque = v.Marque,
+                    modele = v.Modele,
+                    annee = v.Annee,
+                    kilometrage = v.Kilometrage,
+                    prix = v.Prix,
+                    description = v.Description,
+
+                    typeOffre = v.TypeOffre.ToString().ToLower(),
+
+                    disponible = v.Disponible,
+
+                    imageUrl = v.ImageUrl
+                })
                 .ToListAsync();
 
             return Ok(vehicules);
@@ -45,25 +58,33 @@ namespace m_motors_API.Controllers
         // GET: api/vehicule/5
         // Détail d'un véhicule
         [HttpGet("{id}")]
-        public async Task<
-            ActionResult<Vehicule>
-        > GetVehicule(int id)
+        public async Task<ActionResult<object>> GetVehicule(int id)
         {
-            var vehicule = await _context
-                .Vehicules
+            var vehicule = await _context.Vehicules
                 .Include(v => v.VehiculeServices)
-                    .ThenInclude(vs => vs.ServiceLLD)
-                .FirstOrDefaultAsync(
-                    v => v.IdVehicule == id
-                );
+                .ThenInclude(vs => vs.ServiceLLD)
+                .Where(v => v.IdVehicule == id)
+                .Select(v => new
+                {
+                    idVehicule = v.IdVehicule,
+                    marque = v.Marque,
+                    modele = v.Modele,
+                    annee = v.Annee,
+                    kilometrage = v.Kilometrage,
+                    prix = v.Prix,
+                    description = v.Description,
+
+                    typeOffre = v.TypeOffre.ToString().ToLower(),
+
+                    disponible = v.Disponible,
+
+                    imageUrl = v.ImageUrl
+                })
+                .FirstOrDefaultAsync();
 
             if (vehicule == null)
             {
-                return NotFound(new
-                {
-                    message =
-                        "Véhicule introuvable"
-                });
+                return NotFound(new { message = "Véhicule introuvable" });
             }
 
             return Ok(vehicule);
@@ -72,36 +93,34 @@ namespace m_motors_API.Controllers
         // GET: api/vehicule/type/location
         // Filtrer par type d'offre
         [HttpGet("type/{type}")]
-        public async Task<
-            ActionResult<IEnumerable<Vehicule>>
-        > GetVehiculesByType(
-            string type
-        )
+        public async Task<ActionResult<IEnumerable<object>>> GetVehiculesByType(string type)
         {
-            if (
-                !Enum.TryParse<TypeOffre>(
-                    type,
-                    true,
-                    out var typeEnum
-                )
-            )
+            if (!Enum.TryParse<TypeOffre>(type, true, out var typeEnum))
             {
                 return BadRequest(new
                 {
-                    message =
-                        "Type invalide (vente, location)"
+                    message = "Type invalide (vente, location)"
                 });
             }
 
-            var vehicules = await _context
-                .Vehicules
-                .Include(v => v.VehiculeServices)
-                    .ThenInclude(vs => vs.ServiceLLD)
-                .Where(v =>
-                    v.TypeOffre == typeEnum
-                    &&
-                    v.Disponible
-                )
+            var vehicules = await _context.Vehicules
+                .Where(v => v.TypeOffre == typeEnum && v.Disponible)
+                .Select(v => new
+                {
+                    idVehicule = v.IdVehicule,
+                    marque = v.Marque,
+                    modele = v.Modele,
+                    annee = v.Annee,
+                    kilometrage = v.Kilometrage,
+                    prix = v.Prix,
+                    description = v.Description,
+
+                    typeOffre = v.TypeOffre.ToString().ToLower(),
+
+                    disponible = v.Disponible,
+
+                    imageUrl = v.ImageUrl
+                })
                 .ToListAsync();
 
             return Ok(vehicules);
