@@ -9,8 +9,8 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// CONFIGURATION - Configurer les options pour les serveurs IIS et Kestrel afin d'augmenter la limite de taille des requÍtes,
-// ce qui est nÈcessaire pour permettre le tÈlÈchargement de fichiers volumineux, comme les documents ou les images, jusqu'‡ 50 Mo
+// CONFIGURATION - Configurer les options pour les serveurs IIS et Kestrel afin d'augmenter la limite de taille des requ√®tes,
+// ce qui est n√©cessaire pour permettre le t√©l√©chargement de fichiers volumineux, comme les documents ou les images, jusqu' 50 Mo
 builder.Services.Configure<IISServerOptions>(options =>
 {
     options.MaxRequestBodySize = 52428800;
@@ -29,7 +29,7 @@ builder.Services.AddDbContext<MMotorsContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
 );
 
-// Configuration de JWT - RÈcupÈration de la clÈ secrËte depuis appsettings.json et configuration de l'authentification JWT
+// Configuration de JWT - R√©cup√©ration de la cl√© secr√®te depuis appsettings.json et configuration de l'authentification JWT
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new Exception("JWT Key missing");
 var key = Encoding.UTF8.GetBytes(jwtKey);
 
@@ -55,7 +55,8 @@ builder.Services.AddAuthentication(options =>
 });
 
 
-// CORS - Autoriser les requÍtes depuis l'application Angular -http://localhost:4200- avec tous les headers et mÈthodes, et permettre l'envoi de cookies pour l'authentification
+// CORS - Autoriser les requ√™tes depuis l'application Angular -http://localhost:4200- avec tous les headers et m√©thodes, et permettre 
+// l'envoi de cookies pour l'authentification
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
@@ -63,7 +64,8 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins(
                 "http://localhost:4200",
-                "http://192.168.1.14:4200"
+                "http://192.168.1.14:4200",
+                "https://pascalmorelprojetstudi-mmotors.xyz"
             )
             .AllowAnyHeader()
             .AllowAnyMethod()
@@ -72,11 +74,13 @@ builder.Services.AddCors(options =>
 });
 
 
-// SERVICES - Enregistrer les services nÈcessaires pour l'injection de dÈpendances dans les controllers, comme le TokenService pour la gÈnÈration de JWT et le UtilisateurService pour la gestion des utilisateurs
+// SERVICES - Enregistrer les services n√©cessaires pour l'injection de d√©pendances dans les controllers, comme le 
+//TokenService pour la g√©n√©ration de JWT et le UtilisateurService pour la gestion des utilisateurs
 builder.Services.AddScoped<TokenService>();
 // builder.Services.AddScoped<UtilisateurService>();
 
-// CONTROLLERS + JSON CONFIG - Configurer les controllers pour utiliser les options JSON nÈcessaires, comme la conversion des enums en string, la gestion des rÈfÈrences circulaires et l'indentation du JSON pour une meilleure lisibilitÈ
+// CONTROLLERS + JSON CONFIG - Configurer les controllers pour utiliser les options JSON n√©cessaires, comme la 
+// conversion des enums en string, la gestion des r√©f√©rences circulaires et l'indentation du JSON pour une meilleure lisibilit√©
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -88,7 +92,8 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.WriteIndented = true;
     });
 
-// SWAGGER CONFIG - Configurer Swagger pour la documentation de l'API, en ajoutant les informations de base comme le titre et la version, et en configurant la sÈcuritÈ pour permettre l'authentification JWT directement depuis l'interface Swagger
+// SWAGGER CONFIG - Configurer Swagger pour la documentation de l'API, en ajoutant les informations de base comme le 
+// titre et la version, et en configurant la s√©curit√© pour permettre l'authentification JWT directement depuis l'interface Swagger
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(c =>
@@ -128,21 +133,25 @@ builder.Services.AddSwaggerGen(c =>
     c.UseInlineDefinitionsForEnums();
 });
 
-// BUILD APP - Construire l'application avec les configurations et services dÈfinis prÈcÈdemment, et prÈparer le pipeline de traitement des requÍtes
+// BUILD APP - Construire l'application avec les configurations et services d√©finis pr√©c√©demment, et pr√©parer le pipeline de traitement des requ√™tes
 var app = builder.Build();
 
-// AJOUT TEMPORAIRE POUR DEBUG
-app.UseDeveloperExceptionPage();
+// DEVELOPMENT - Configurer les options sp√©cifiques pour l'environnement de d√©veloppement, comme la page d'erreur d√©taill√©e pour faciliter le d√©bogage
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
 
 
-// MIDDLEWARE - Configurer le pipeline de traitement des requÍtes, en ajoutant les middlewares nÈcessaires pour Swagger, HTTPS, fichiers statiques, CORS, authentification et autorisation
+// MIDDLEWARE - Configurer le pipeline de traitement des requ√™tes, en ajoutant les middlewares n√©cessaires pour Swagger, 
+// HTTPS, fichiers statiques, CORS, authentification et autorisation
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// app.UseHttpsRedirection(); // CommentÈ pour Èviter les problËmes de certificat en dÈveloppement, ‡ rÈactiver en production
+// app.UseHttpsRedirection(); // Comment√© pour √©viter les probl√®mes de certificat en d√©veloppement, √† r√©activer en production
 
 app.UseStaticFiles();
 
