@@ -26,7 +26,7 @@ namespace m_motors_API.Services
 
             if (string.IsNullOrEmpty(secret))
             {
-                throw new Exception("Jwt : Le paramètre Issuer est manquant dans la configuration");
+                throw new Exception("Jwt : La clé Jwt:Key est manquante dans la configuration");
             }
 
             if (string.IsNullOrEmpty(issuer))
