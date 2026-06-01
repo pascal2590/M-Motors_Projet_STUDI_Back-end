@@ -1,13 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-
 using Microsoft.EntityFrameworkCore;
-
 using m_motors_API.Data;
-
 using m_motors_API.Models;
-
 using m_motors_API.Enums;
-
 using m_motors_API.DTOs;
 
 namespace m_motors_API.Controllers
@@ -43,15 +38,11 @@ namespace m_motors_API.Controllers
                     kilometrage = v.Kilometrage,
                     prix = v.Prix,
                     description = v.Description,
-
                     typeOffre = v.TypeOffre.ToString().ToLower(),
-
                     disponible = v.Disponible,
-
                     imageUrl = v.ImageUrl
                 })
                 .ToListAsync();
-
             return Ok(vehicules);
         }
 
@@ -73,11 +64,8 @@ namespace m_motors_API.Controllers
                     kilometrage = v.Kilometrage,
                     prix = v.Prix,
                     description = v.Description,
-
                     typeOffre = v.TypeOffre.ToString().ToLower(),
-
                     disponible = v.Disponible,
-
                     imageUrl = v.ImageUrl
                 })
                 .FirstOrDefaultAsync();
@@ -114,15 +102,11 @@ namespace m_motors_API.Controllers
                     kilometrage = v.Kilometrage,
                     prix = v.Prix,
                     description = v.Description,
-
                     typeOffre = v.TypeOffre.ToString().ToLower(),
-
                     disponible = v.Disponible,
-
                     imageUrl = v.ImageUrl
                 })
                 .ToListAsync();
-
             return Ok(vehicules);
         }
 
@@ -138,21 +122,13 @@ namespace m_motors_API.Controllers
             var vehicule = new Vehicule
             {
                 Marque = dto.Marque,
-
                 Modele = dto.Modele,
-
                 Annee = dto.Annee,
-
                 Kilometrage = dto.Kilometrage,
-
                 Prix = dto.Prix,
-
                 Description = dto.Description,
-
                 TypeOffre = dto.TypeOffre,
-
                 Disponible = dto.Disponible,
-
                 ImageUrl = dto.ImageUrl
             };
 
@@ -165,10 +141,7 @@ namespace m_motors_API.Controllers
 
             // SERVICES LLD
             if (
-                dto.TypeOffre
-                    == TypeOffre.location
-                &&
-                dto.ServicesLld != null
+                dto.TypeOffre == TypeOffre.location && dto.ServicesLld != null
             )
             {
                 foreach (
@@ -182,14 +155,10 @@ namespace m_motors_API.Controllers
 
                         new VehiculeServiceLLD
                         {
-                            IdVehicule =
-                                vehicule.IdVehicule,
-
-                            IdService =
-                                serviceId
+                            IdVehicule = vehicule.IdVehicule,
+                            IdService = serviceId
                         });
                 }
-
                 await _context
                     .SaveChangesAsync();
             }
@@ -197,13 +166,10 @@ namespace m_motors_API.Controllers
             return CreatedAtAction(
 
                 nameof(GetVehicule),
-
                 new
                 {
-                    id =
-                        vehicule.IdVehicule
+                    id = vehicule.IdVehicule
                 },
-
                 vehicule
             );
         }
@@ -230,47 +196,27 @@ namespace m_motors_API.Controllers
             {
                 return NotFound(new
                 {
-                    message =
-                        "Véhicule introuvable"
+                    message = "Véhicule introuvable"
                 });
             }
 
             // UPDATE VEHICULE
-            vehicule.Marque =
-                dto.Marque;
-
-            vehicule.Modele =
-                dto.Modele;
-
-            vehicule.Annee =
-                dto.Annee;
-
-            vehicule.Kilometrage =
-                dto.Kilometrage;
-
-            vehicule.Prix =
-                dto.Prix;
-
-            vehicule.Description =
-                dto.Description;
-
-            vehicule.TypeOffre =
-                dto.TypeOffre;
-
-            vehicule.Disponible =
-                dto.Disponible;
-
-            vehicule.ImageUrl =
-                dto.ImageUrl;
+            vehicule.Marque = dto.Marque;
+            vehicule.Modele = dto.Modele;
+            vehicule.Annee = dto.Annee;
+            vehicule.Kilometrage = dto.Kilometrage;
+            vehicule.Prix = dto.Prix;
+            vehicule.Description = dto.Description;
+            vehicule.TypeOffre = dto.TypeOffre;
+            vehicule.Disponible = dto.Disponible;
+            vehicule.ImageUrl = dto.ImageUrl;
 
             // Suppression des anciens services liés au véhicule
             var existingServices =
-
                 _context
                 .VehiculeServiceLLDs
                 .Where(v =>
                     v.IdVehicule == id);
-
             _context
                 .VehiculeServiceLLDs
                 .RemoveRange(
@@ -279,10 +225,7 @@ namespace m_motors_API.Controllers
 
             // Ajout des nouveaux services liés au véhicule
             if (
-                dto.TypeOffre
-                    == TypeOffre.location
-                &&
-                dto.ServicesLld != null
+                dto.TypeOffre == TypeOffre.location && dto.ServicesLld != null
             )
             {
                 foreach (
@@ -297,9 +240,7 @@ namespace m_motors_API.Controllers
                         new VehiculeServiceLLD
                         {
                             IdVehicule = id,
-
-                            IdService =
-                                serviceId
+                            IdService = serviceId
                         });
                 }
             }
@@ -324,8 +265,7 @@ namespace m_motors_API.Controllers
             {
                 return NotFound(new
                 {
-                    message =
-                        "Véhicule introuvable"
+                    message = "Véhicule introuvable"
                 });
             }
 

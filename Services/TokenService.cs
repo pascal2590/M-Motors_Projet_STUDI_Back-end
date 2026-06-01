@@ -24,6 +24,16 @@ namespace m_motors_API.Services
             var secret = _config["Jwt:Key"];
             var issuer = _config["Jwt:Issuer"];
 
+            if (string.IsNullOrEmpty(secret))
+            {
+                throw new Exception("Jwt : Le paramètre Issuer est manquant dans la configuration");
+            }
+
+            if (string.IsNullOrEmpty(issuer))
+            {
+                throw new Exception("Jwt : Le paramètre Issuer est manquant dans la configuration");
+            };
+
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(secret));
 
