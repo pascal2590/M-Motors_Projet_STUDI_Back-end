@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using m_motors_API.Data;
+using m_motors_API.DTO;
+using m_motors_API.DTO.Logs;
+using m_motors_API.Models;
+using m_motors_API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using m_motors_API.Data;
-using m_motors_API.Models;
-using m_motors_API.DTO;
 
 namespace m_motors_API.Controllers
 {
@@ -12,16 +14,48 @@ namespace m_motors_API.Controllers
     [Authorize(Roles = "Administrateur")]
     public class AdminController : ControllerBase
     {
+        // Contexte de la base de données pour accéder aux données des utilisateurs, des rôles et des logs
         private readonly MMotorsContext _context;
 
-        public AdminController(MMotorsContext context)
+        // Service de gestion des logs pour permettre à l'administrateur de consulter les logs d'activité et d'erreur de l'application
+        private readonly ILogService _logService;
+
+        // Constructeur pour injecter les dépendances nécessaires, comme le contexte de la base de données et le service de logs
+        public AdminController( MMotorsContext context, ILogService logService)
         {
             _context = context;
+            _logService = logService;
+        }
+
+        // Endpoint pour récupérer les statistiques des logs, comme le nombre total de logs, le nombre d'erreurs, les logs du jour, etc.
+        [HttpGet("logs/stats")]
+        public IActionResult GetLogStats()
+        {
+            var today = DateTime.Today;
+
+            var result = new
+            {
+                totalLogs = _context.ApplicationLogs.Count(),
+                totalErrors = _context.ApplicationLogs.Count(l => l.Niveau == "ERROR"),
+                logsToday = _context.ApplicationLogs.Count(l => l.DateLog >= today),
+                errorsToday = _context.ApplicationLogs.Count(l => l.Niveau == "ERROR" && l.DateLog >= today)
+            };
+
+            return Ok(result);
+        }
+
+        // Endpoint pour récupérer les logs avec des filtres
+        [HttpPost("logs")]
+        public async Task<IActionResult> GetLogs([FromBody] LogFilterRequest? filter)
+        {
+            filter ??= new LogFilterRequest();
+            var logs = await _logService.GetLogsAsync(filter);
+            return Ok(logs);
         }
 
         // Création du commercial
         [HttpPost("create-commercial")]
-        public IActionResult CreateCommercial([FromBody] CreateCommercialRequest request)
+        public async Task<IActionResult> CreateCommercialAsync([FromBody] CreateCommercialRequest request)
         {
             if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
             {
@@ -54,6 +88,13 @@ namespace m_motors_API.Controllers
             _context.Utilisateurs.Add(user);
             _context.SaveChanges();
 
+            await _logService.LogInfoAsync(
+                $"Création du commercial : {user.Email}",
+                User.Identity?.Name,
+                endpoint: HttpContext.Request.Path,
+                methodeHttp: HttpContext.Request.Method
+            );
+
             return Ok(new { message = "Commercial créé avec succès" });
         }
 
@@ -78,7 +119,7 @@ namespace m_motors_API.Controllers
 
         // Suppression d'un commercial 
         [HttpDelete("commercial/{id}")]
-        public IActionResult DeleteCommercial(int id)
+        public async Task<IActionResult> DeleteCommercialAsync(int id)
         {
             var user = _context.Utilisateurs
                 .Include(u => u.Role)
@@ -96,6 +137,13 @@ namespace m_motors_API.Controllers
 
             _context.Utilisateurs.Remove(user);
             _context.SaveChanges();
+
+            await _logService.LogInfoAsync(
+                $"Suppression du commercial : {user.Email}",
+                User.Identity?.Name,
+                endpoint: HttpContext.Request.Path,
+                methodeHttp: HttpContext.Request.Method
+            );
 
             return Ok(new { message = "Commercial supprimé" });
         }
@@ -145,7 +193,7 @@ namespace m_motors_API.Controllers
 
         // Mise à jour d'un commercial
         [HttpPut("commercial/{id}")]
-        public IActionResult UpdateCommercial(int id, [FromBody] UpdateCommercialRequest request)
+        public async Task<IActionResult> UpdateCommercialAsync(int id, [FromBody] UpdateCommercialRequest request)
         {
             var user = _context.Utilisateurs
                 .Include(u => u.Role)
@@ -170,6 +218,13 @@ namespace m_motors_API.Controllers
             }
 
             _context.SaveChanges();
+
+            await _logService.LogInfoAsync(
+                $"Modification du commercial : {user.Email}",
+                User.Identity?.Name,
+                endpoint: HttpContext.Request.Path,
+                methodeHttp: HttpContext.Request.Method
+            );
 
             return Ok(new { message = "Commercial mis à jour" });
         }

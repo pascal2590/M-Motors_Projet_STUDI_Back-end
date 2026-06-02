@@ -22,10 +22,49 @@ namespace m_motors_API.Data
         public DbSet<VehiculeServiceLLD> VehiculeServiceLLDs { get; set; }
         public DbSet<DossierFinancement> DossierFinancements { get; set; }
         public DbSet<MessageClient> MessagesClients { get; set; }
+        public DbSet<ApplicationLog> ApplicationLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            #region APPLICATION_LOG
+
+            modelBuilder.Entity<ApplicationLog>(entity =>
+            {
+                entity.ToTable("application_log");
+
+                entity.HasKey(l => l.IdLog);
+
+                entity.Property(l => l.IdLog)
+                    .HasColumnName("id_log");
+
+                entity.Property(l => l.Niveau)
+                    .HasColumnName("niveau");
+
+                entity.Property(l => l.Message)
+                    .HasColumnName("message");
+
+                entity.Property(l => l.Exception)
+                    .HasColumnName("exception");
+
+                entity.Property(l => l.StackTrace)
+                    .HasColumnName("stack_trace");
+
+                entity.Property(l => l.Endpoint)
+                    .HasColumnName("endpoint");
+
+                entity.Property(l => l.MethodeHttp)
+                    .HasColumnName("methode_http");
+
+                entity.Property(l => l.Utilisateur)
+                    .HasColumnName("utilisateur");
+
+                entity.Property(l => l.DateLog)
+                    .HasColumnName("date_log");
+            });
+
+            #endregion
 
             #region MESSAGE_CLIENT
             modelBuilder.Entity<MessageClient>().ToTable("message_client").HasKey(m => m.IdMessage);

@@ -1,9 +1,10 @@
+using m_motors_API.Data;
+using m_motors_API.Middleware;
+using m_motors_API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using m_motors_API.Data;
-using m_motors_API.Services;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -79,6 +80,9 @@ builder.Services.AddCors(options =>
 builder.Services.AddScoped<TokenService>();
 // builder.Services.AddScoped<UtilisateurService>();
 
+// Service de gestion des logs pour permettre l'enregistrement des activités et des erreurs de l'application dans la base de données,
+builder.Services.AddScoped<ILogService, LogService>();
+
 // CONTROLLERS + JSON CONFIG - Configurer les controllers pour utiliser les options JSON nécessaires, comme la 
 // conversion des enums en string, la gestion des références circulaires et l'indentation du JSON pour une meilleure lisibilité
 builder.Services.AddControllers()
@@ -136,11 +140,14 @@ builder.Services.AddSwaggerGen(c =>
 // BUILD APP - Construire l'application avec les configurations et services définis précédemment, et préparer le pipeline de traitement des requêtes
 var app = builder.Build();
 
+// EXCEPTION MIDDLEWARE - Middleware pour gérer les exceptions non gérées, en loggant les erreurs et en renvoyant une réponse JSON standardisée
+app.UseMiddleware<ExceptionMiddleware>();
+
 // DEVELOPMENT - Configurer les options spécifiques pour l'environnement de développement, comme la page d'erreur détaillée pour faciliter le débogage
-if (app.Environment.IsDevelopment())
-{
-    app.UseDeveloperExceptionPage();
-}
+// if (app.Environment.IsDevelopment())
+//{
+//    app.UseDeveloperExceptionPage();
+//}
 
 
 // MIDDLEWARE - Configurer le pipeline de traitement des requêtes, en ajoutant les middlewares nécessaires pour Swagger, 
@@ -154,12 +161,8 @@ if (app.Environment.IsDevelopment())
 // app.UseHttpsRedirection(); // Commenté pour éviter les problèmes de certificat en développement, à réactiver en production
 
 app.UseStaticFiles();
-
 app.UseCors("AllowAngular");
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();
