@@ -50,3 +50,24 @@ appsettings*.json
 node_modules/
 dist/
 .tmp/
+
+# Build folders
+bin/
+obj/
+publish/
+wwwroot/uploads/documents/
+
+# Visual Studio
+.vs/
+*.user
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment
+appsettings.Development.json
+appsettings.json
