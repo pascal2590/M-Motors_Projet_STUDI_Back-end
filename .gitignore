@@ -1,26 +1,14 @@
-## Base .gitignore pour .NET / ASP.NET Core
+## .NET / ASP.NET Core
 
-# Build et bin/obj
+# Build
 [Bb]in/
 [Oo]bj/
-
-# Build results
 [Dd]ebug/
 [Rr]elease/
 x64/
 x86/
 artifacts/
-
-# Logs
-[Ll]og/
-[Ll]ogs/
-*.log
-
-# Packages NuGet
-*.nupkg
-*.snupkg
-project.lock.json
-project.fragment.lock.json
+publish/
 
 # Visual Studio
 .vs/
@@ -32,42 +20,41 @@ project.fragment.lock.json
 # Rider / JetBrains
 .idea/
 
-# Coverage & Test
+# Logs
+[Ll]og/
+[Ll]ogs/
+*.log
+
+# NuGet
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+
+# Coverage / Tests
 [Tt]est[Rr]esult*/
 nunit-*.xml
 *.VisualState.xml
 Coverage/
 
-# ASP.NET Core / EF
+# ASP.NET Core
 ScaffoldingReadMe.txt
-appsettings*.json
 
-# Temporary files
+# Fichiers temporaires
 ~$*
 *~
 
-# Node / npm (si tu as un frontend Angular dans le repo)
+# Angular / Node
 node_modules/
 dist/
 .tmp/
 
-# Build folders
-bin/
-obj/
-publish/
+# Uploads utilisateurs
 wwwroot/uploads/documents/
 
-# Visual Studio
-.vs/
-*.user
-
-# Logs
-*.log
-
-# OS files
+# OS
 .DS_Store
 Thumbs.db
 
-# Environment
+# Environment local uniquement
 appsettings.Development.json
-appsettings.json
