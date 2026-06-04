@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using m_motors_API.Data;
-using m_motors_API.Models;
-using m_motors_API.Enums;
+﻿using m_motors_API.Data;
 using m_motors_API.DTOs;
+using m_motors_API.Enums;
+using m_motors_API.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace m_motors_API.Controllers
 {
@@ -112,6 +113,7 @@ namespace m_motors_API.Controllers
 
         // POST: api/vehicule
         // Création véhicule
+        [Authorize(Roles = "Administrateur,Commercial")]
         [HttpPost]
         public async Task<
             ActionResult<Vehicule>
@@ -176,6 +178,7 @@ namespace m_motors_API.Controllers
 
         // PUT: api/vehicule/5
         // Modification véhicule
+        [Authorize(Roles = "Administrateur,Commercial")]
         [HttpPut("{id}")]
         public async Task<IActionResult>
             UpdateVehicule(
@@ -252,7 +255,8 @@ namespace m_motors_API.Controllers
         }
 
         // DELETE: api/vehicule/5
-        // Suppression d'unvéhicule
+        // Suppression d'un véhicule
+        [Authorize(Roles = "Administrateur,Commercial")]
         [HttpDelete("{id}")]
         public async Task<IActionResult>
             DeleteVehicule(int id)
@@ -266,6 +270,21 @@ namespace m_motors_API.Controllers
                 return NotFound(new
                 {
                     message = "Véhicule introuvable"
+                });
+            }
+
+            // Vérifier si le véhicule est déjà lié à un dossier
+            // afin d'éviter une erreur SQL de contrainte étrangère
+            var hasDossier = await _context
+                .Dossiers
+                .AnyAsync(d =>
+                    d.VehiculeId == id);
+
+            if (hasDossier)
+            {
+                return BadRequest(new
+                {
+                    message = "Impossible de supprimer un véhicule lié à un dossier"
                 });
             }
 
