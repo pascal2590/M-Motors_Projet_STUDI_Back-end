@@ -21,20 +21,20 @@ namespace m_motors_API.Controllers
 
 
         // Créer un nouveau client
-        [HttpPost]
-        public async Task<ActionResult<Client>> CreateClient(Client client)
-        {
-            client.DateUpload = DateTime.Now;
+        //[HttpPost]
+        //public async Task<ActionResult<Client>> CreateClient(Client client)
+        //{
+        //   client.DateUpload = DateTime.Now;
+        //
+        //    _context.Clients.Add(client);
+        //    await _context.SaveChangesAsync();
 
-            _context.Clients.Add(client);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(
-                nameof(CreateClient),
-                new { id = client.IdClient },
-                client
-            );
-        }
+         //   return CreatedAtAction(
+         //       nameof(CreateClient),
+         //       new { id = client.IdClient },
+             //   client
+           // );
+        //}
 
         
         // Voir mes dossiers (JWT - PROPRE)        
