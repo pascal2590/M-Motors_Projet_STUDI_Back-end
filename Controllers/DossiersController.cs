@@ -39,11 +39,11 @@ namespace m_motors_API.Controllers
             if (!vehicule.Disponible)
                 return (null, null, BadRequest("Vehicule non disponible"));
 
-            var already = _context.Dossiers
-                .Any(d => d.VehiculeId == vehiculeId);
+            //var already = _context.Dossiers
+            //    .Any(d => d.VehiculeId == vehiculeId);
 
-            if (already)
-                return (null, null, BadRequest("Vehicule déjà utilisé dans un dossier"));
+            // if (already)
+               // return (null, null, BadRequest("Vehicule déjà utilisé dans un dossier"));
 
             return (client, vehicule, null);
         }
@@ -224,13 +224,26 @@ namespace m_motors_API.Controllers
             {
                 success = true,
                 message = "Dossier LLD créé avec succès",
+
                 data = new
                 {
-                    dossier.IdDossier,
-                    dossier.TypeDossier,
-                    dossier.Statut,
-                    dossier.DateCreation,
-                    financement
+                    idDossier = dossier.IdDossier,
+
+                    typeDossier = dossier.TypeDossier.ToString(),
+
+                    statut = dossier.Statut.ToString(),
+
+                    dateCreation = dossier.DateCreation,
+
+                    financement = new
+                    {
+                        financement.Id,
+                        financement.Apport,
+                        financement.Financement,
+                        financement.Duree,
+                        financement.Kilometrage,
+                        financement.Mensualite
+                    }
                 }
             });
         }

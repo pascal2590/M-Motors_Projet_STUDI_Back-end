@@ -25,12 +25,36 @@ namespace m_motors_API.Controllers
         {
             try
             {
-                if (model == null || model.File == null || model.File.Length == 0)
+                if (model == null || model.File == null)
                 {
                     return BadRequest(new
                     {
                         success = false,
-                        message = "Fichier invalide"
+                        message = "Aucun fichier reçu"
+                    });
+                }
+
+                // Vérification extension
+                var allowedExtensions = new[] { ".pdf", ".jpg", ".jpeg", ".png" };
+
+                var extension = Path.GetExtension(model.File.FileName).ToLower();
+
+                if (!allowedExtensions.Contains(extension))
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Format de fichier non autorisé. Formats acceptés : PDF, JPG, PNG"
+                    });
+                }
+
+                // Vérification fichier vide
+                if (model.File.Length == 0)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Fichier vide ou bloqué par le navigateur"
                     });
                 }
 
@@ -43,20 +67,6 @@ namespace m_motors_API.Controllers
                     {
                         success = false,
                         message = "Le fichier dépasse la taille maximale autorisée de 5 Mo"
-                    });
-                }
-
-                // Extensions autorisées
-                var allowedExtensions = new[] { ".pdf", ".jpg", ".jpeg", ".png" };
-
-                var extension = Path.GetExtension(model.File.FileName).ToLower();
-
-                if (!allowedExtensions.Contains(extension))
-                {
-                    return BadRequest(new
-                    {
-                        success = false,
-                        message = "Format de fichier non autorisé. Formats acceptés : PDF, JPG, PNG"
                     });
                 }
 
@@ -159,11 +169,25 @@ namespace m_motors_API.Controllers
         [HttpGet("verifier/{dossierId}")]
         public IActionResult VerifierDossier(int dossierId)
         {
+            var dossier = _context.Dossiers
+                .FirstOrDefault(d => d.IdDossier == dossierId);
+
+            if (dossier == null)
+            {
+                return NotFound(new
+                {
+                    message = "Dossier introuvable"
+                });
+            }
+
             var documents = _context.Documents
-                .Where(d => d.DossierId == dossierId)
+                .Where(d =>
+                    d.DossierId == dossierId &&
+                    !string.IsNullOrEmpty(d.CheminFichier))
                 .Select(d => d.TypeDocument)
                 .ToList();
 
+            // Documents obligatoires
             var requis = new List<string>
             {
                 "identite",
@@ -171,6 +195,12 @@ namespace m_motors_API.Controllers
                 "revenus",
                 "rib"
             };
+
+            // Permis obligatoire pour la LOCATION
+            if (dossier.TypeDossier.ToString().ToLower() == "location")
+            {
+                requis.Add("permis");
+            }
 
             var manquants = requis.Except(documents).ToList();
 
