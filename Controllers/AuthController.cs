@@ -18,13 +18,17 @@ namespace m_motors_API.Controllers
     {
         private readonly MMotorsContext _context;
         private readonly TokenService _tokenService;
+        private readonly ILogService _logService;
 
+        // Injection de dépendances pour le contexte de la base de données, le service de token et le service de log
         public AuthController(
             MMotorsContext context,
-            TokenService tokenService)
+            TokenService tokenService,
+            ILogService logService)
         {
             _context = context;
             _tokenService = tokenService;
+            _logService = logService;
         }
 
         // PING temporaire pour tester le controller
@@ -164,73 +168,136 @@ namespace m_motors_API.Controllers
             });
         }
 
-        // LOGIN GÉNÉRAL (client ou back-office) - Récupère l'utilisateur dans la table Clients ou Utilisateurs, vérifie le mot de passe et génère un token avec les infos nécessaires
+        // LOGIN GÉNÉRAL (client ou back-office)
+        // Récupère l'utilisateur dans la table Clients ou Utilisateurs,
+        // vérifie le mot de passe et génère un token avec les infos nécessaires
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> Login(
+            [FromBody] LoginRequest request)
         {
-            // CLIENT
-            var client = _context.Clients
-                .FirstOrDefault(c => c.Email == request.Email);
-
-            if (client != null &&
-                BCrypt.Net.BCrypt.Verify(request.Password, client.Password))
+            try
             {
-                var token = _tokenService.GenerateToken(
-                    client.Email,
-                    "Client",
-                    "Client",
-                    client.IdClient,
-                    client.Prenom,
-                    client.Nom
+                // CLIENT
+                var client = _context.Clients
+                    .FirstOrDefault(c =>
+                        c.Email == request.Email);
+
+                if (
+                    client != null &&
+                    BCrypt.Net.BCrypt.Verify(
+                        request.Password,
+                        client.Password
+                    )
+                )
+                {
+                    // LOG INFO
+                    await _logService.LogInfoAsync(
+                        message: "Connexion client réussie",
+                        utilisateur: client.Email,
+                        endpoint: "/api/Auth/login",
+                        methodeHttp: "POST"
+                    );
+
+                    var token = _tokenService.GenerateToken(
+                        client.Email,
+                        "Client",
+                        "Client",
+                        client.IdClient,
+                        client.Prenom,
+                        client.Nom
+                    );
+
+                    return Ok(new
+                    {
+                        token,
+                        user = new
+                        {
+                            id = client.IdClient,
+                            nom = client.Nom,
+                            prenom = client.Prenom,
+                            email = client.Email,
+                            role = "Client"
+                        }
+                    });
+                }
+
+                // BACKOFFICE
+                var user = _context.Utilisateurs
+                    .Include(u => u.Role)
+                    .FirstOrDefault(u =>
+                        u.Email == request.Email);
+
+                if (
+                    user != null &&
+                    BCrypt.Net.BCrypt.Verify(
+                        request.Password,
+                        user.Password
+                    )
+                )
+                {
+                    var roleName =
+                        user.Role?.NomRole ?? "Unknown";
+
+                    // LOG INFO
+                    await _logService.LogInfoAsync(
+                       message: $"Connexion backoffice réussie ({roleName})",
+                       utilisateur: user.Email,
+                       endpoint: "/api/Auth/login",
+                       methodeHttp: "POST"
+                     );
+
+                    var token = _tokenService.GenerateToken(
+                        user.Email,
+                        roleName,
+                        "BackOffice",
+                        user.IdUser,
+                        user.Prenom,
+                        user.Nom
+                    );
+
+                    return Ok(new
+                    {
+                        token,
+                        user = new
+                        {
+                            id = user.IdUser,
+                            nom = user.Nom,
+                            prenom = user.Prenom,
+                            email = user.Email,
+                            role = roleName
+                        }
+                    });
+                }
+
+                // WARNING LOGIN ÉCHOUÉ
+                await _logService.LogWarningAsync(
+                    message: "Tentative de connexion échouée",
+                    utilisateur: request.Email,
+                    endpoint: "/api/Auth/login",
+                    methodeHttp: "POST"
                 );
 
-                return Ok(new
+                return Unauthorized(new
                 {
-                    token,
-                    user = new
-                    {
-                        id = client.IdClient,
-                        nom = client.Nom,
-                        prenom = client.Prenom,
-                        email = client.Email,
-                        role = "Client"
-                    }
+                    message = "Identifiants invalides"
                 });
             }
-
-            // BACKOFFICE
-            var user = _context.Utilisateurs
-                .Include(u => u.Role)
-                .FirstOrDefault(u => u.Email == request.Email);
-
-            if (user != null &&
-                BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
+            catch (Exception ex)
             {
-                var roleName = user.Role?.NomRole ?? "Unknown";
-
-                var token = _tokenService.GenerateToken(
-                    user.Email,
-                    roleName,
-                    "BackOffice",
-                    user.IdUser,
-                    user.Prenom, // Ajouté le 14/05/2026
-                    user.Nom
+                // LOG ERROR
+                await _logService.LogErrorAsync(
+                    message: "Erreur durant le login",
+                    exception: ex,
+                    endpoint: "/api/Auth/login",
+                    methodeHttp: "POST",
+                    utilisateur: request.Email
                 );
 
-                return Ok(new
+                return StatusCode(500, new
                 {
-                    token,
-                    user = new
-                    {
-                        id = user.IdUser,
-                        nom = user.Nom,
-                        prenom = user.Prenom,                        
-                        email = user.Email,
-                        role = roleName
-                    }
+                    message = "Erreur serveur"
                 });
             }
-            return Unauthorized(new { message = "Identifiants invalides" });
         }
     }
 }

@@ -19,6 +19,21 @@ namespace m_motors_API.Services
             string? utilisateur = null
         );
 
+        Task LogWarningAsync(
+            string message,
+            string? utilisateur = null,
+            string? endpoint = null,
+            string? methodeHttp = null
+        );
+
+        public interface ILogService
+        {
+            Task CreateLogAsync(
+                string niveau,
+                string message,
+                string details
+            );
+        }
         Task<object> GetLogsAsync(LogFilterRequest filter);
     }
 }

@@ -33,6 +33,27 @@ namespace m_motors_API.Services
             await _context.SaveChangesAsync();
         }
 
+        public async Task LogWarningAsync(
+            string message,
+            string? utilisateur = null,
+            string? endpoint = null,
+            string? methodeHttp = null)
+        {
+            var log = new ApplicationLog
+            {
+                Niveau = "WARNING",
+                Message = message,
+                Utilisateur = utilisateur,
+                Endpoint = endpoint,
+                MethodeHttp = methodeHttp,
+                DateLog = DateTime.UtcNow
+            };
+
+            _context.ApplicationLogs.Add(log);
+
+            await _context.SaveChangesAsync();
+        }
+
         public async Task LogInfoAsync(string message, string? utilisateur = null)
         {
             var log = new ApplicationLog
