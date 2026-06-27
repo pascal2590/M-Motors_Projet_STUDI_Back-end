@@ -26,7 +26,7 @@ namespace m_motors_API.Services
                 Utilisateur = utilisateur,
                 Endpoint = endpoint,
                 MethodeHttp = methodeHttp,
-                DateLog = DateTime.UtcNow
+                DateLog = DateTime.Now
             };
 
             _context.ApplicationLogs.Add(log);
@@ -46,7 +46,7 @@ namespace m_motors_API.Services
                 Utilisateur = utilisateur,
                 Endpoint = endpoint,
                 MethodeHttp = methodeHttp,
-                DateLog = DateTime.UtcNow
+                DateLog = DateTime.Now
             };
 
             _context.ApplicationLogs.Add(log);

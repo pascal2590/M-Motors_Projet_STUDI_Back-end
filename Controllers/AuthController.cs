@@ -177,6 +177,9 @@ namespace m_motors_API.Controllers
         {
             try
             {
+                // TEST ERROR serveur pour vérifier le log d'erreur
+                //throw new Exception("Erreur volontaire de test");
+
                 // CLIENT
                 var client = _context.Clients
                     .FirstOrDefault(c =>

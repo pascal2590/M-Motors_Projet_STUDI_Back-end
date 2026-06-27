@@ -62,7 +62,7 @@ namespace m_motors_API.Services
                 issuer: issuer,
                 audience: issuer,
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(30),
+                expires: DateTime.Now.AddMinutes(30),
                 signingCredentials: creds
             );
 
