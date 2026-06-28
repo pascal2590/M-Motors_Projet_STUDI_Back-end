@@ -294,9 +294,12 @@ namespace m_motors_API.Controllers
                 {
                     d.IdDocument,
                     d.TypeDocument,
+                    d.NomDocument,
+
                     CheminFichier = string.IsNullOrEmpty(d.CheminFichier)
                         ? null
                         : $"{Request.Scheme}://{Request.Host}{d.CheminFichier}",
+
                     d.DateAjout
                 })
                 .ToList();
