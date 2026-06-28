@@ -141,7 +141,7 @@ namespace m_motors_API.Controllers
                     DossierId = model.DossierId,
                     TypeDocument = model.TypeDocument,
                     NomDocument = model.File.FileName,
-                    CheminFichier = $"uploads/documents/{fileName}",
+                    CheminFichier = $"/uploads/documents/{fileName}",
                     DateAjout = DateTime.Now
                 };
 

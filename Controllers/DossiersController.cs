@@ -294,7 +294,9 @@ namespace m_motors_API.Controllers
                 {
                     d.IdDocument,
                     d.TypeDocument,
-                    d.CheminFichier,
+                    CheminFichier = string.IsNullOrEmpty(d.CheminFichier)
+                        ? null
+                        : $"{Request.Scheme}://{Request.Host}{d.CheminFichier}",
                     d.DateAjout
                 })
                 .ToList();
@@ -380,7 +382,10 @@ namespace m_motors_API.Controllers
                         .Select(doc => new
                         {
                             doc.TypeDocument,
-                            doc.CheminFichier
+
+                            CheminFichier = string.IsNullOrEmpty(doc.CheminFichier)
+                                ? null
+                                : $"{Request.Scheme}://{Request.Host}{doc.CheminFichier}"
                         })
                         .ToList()
                 })

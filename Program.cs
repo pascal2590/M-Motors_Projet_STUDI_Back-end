@@ -2,6 +2,7 @@ using m_motors_API.Data;
 using m_motors_API.Middleware;
 using m_motors_API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -139,6 +140,14 @@ builder.Services.AddSwaggerGen(c =>
 
 // BUILD APP - Construire l'application avec les configurations et services définis précédemment, et préparer le pipeline de traitement des requêtes
 var app = builder.Build();
+
+// FORWARDED HEADERS - Configurer le middleware pour gérer les en-têtes X-Forwarded-For et X-Forwarded-Proto,
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor |
+        ForwardedHeaders.XForwardedProto
+});
 
 // EXCEPTION MIDDLEWARE - Middleware pour gérer les exceptions non gérées, en loggant les erreurs et en renvoyant une réponse JSON standardisée
 app.UseMiddleware<ExceptionMiddleware>();
